@@ -36,6 +36,39 @@ const CARD_OPTIONS = [
 
 const PAGE_SIZE = 150
 
+function parseSequenceQuery(query: string): string[] {
+  return query
+    .toUpperCase()
+    .split(/[^A-Z0-9]+/)
+    .filter(Boolean)
+    .map((token) => (token === 'T' ? '10' : token))
+}
+
+function buildPrefixTable(pattern: string[]): number[] {
+  const lps = new Array<number>(pattern.length).fill(0)
+  let len = 0
+  let i = 1
+
+  while (i < pattern.length) {
+    if (pattern[i] === pattern[len]) {
+      len += 1
+      lps[i] = len
+      i += 1
+      continue
+    }
+
+    if (len > 0) {
+      len = lps[len - 1]
+      continue
+    }
+
+    lps[i] = 0
+    i += 1
+  }
+
+  return lps
+}
+
 function normalizeTotals(totals: number[]): number[] {
   return [...new Set(totals)].sort((a, b) => a - b)
 }
@@ -86,11 +119,40 @@ function formatProbability(probability: number): string {
   return `${percentage.toExponential(2)}%`
 }
 
-function createTreeNavigator(threshold: number): TreeNavigator {
+function createTreeNavigator(threshold: number, sequenceTokens: string[]): TreeNavigator {
   const countMemo = new Map<string, number>()
+  const prefixTable = buildPrefixTable(sequenceTokens)
 
-  const countFromTotals = (totals: number[], cardCount: number, finalHandsOnly: boolean): number => {
-    const key = `${finalHandsOnly ? 'final' : 'all'}:${cardCount}:${normalizeTotals(totals).join(',')}`
+  const advanceMatch = (matchState: number, cardLabel: string): { state: number; matched: boolean } => {
+    if (sequenceTokens.length === 0) {
+      return { state: 0, matched: true }
+    }
+
+    let nextState = matchState
+
+    while (nextState > 0 && sequenceTokens[nextState] !== cardLabel) {
+      nextState = prefixTable[nextState - 1]
+    }
+
+    if (sequenceTokens[nextState] === cardLabel) {
+      nextState += 1
+    }
+
+    if (nextState === sequenceTokens.length) {
+      return { state: prefixTable[nextState - 1] ?? 0, matched: true }
+    }
+
+    return { state: nextState, matched: false }
+  }
+
+  const countFromTotals = (
+    totals: number[],
+    cardCount: number,
+    finalHandsOnly: boolean,
+    matchState: number,
+    hasMatched: boolean,
+  ): number => {
+    const key = `${finalHandsOnly ? 'final' : 'all'}:${cardCount}:${matchState}:${hasMatched ? 1 : 0}:${normalizeTotals(totals).join(',')}`
 
     if (countMemo.has(key)) {
       return countMemo.get(key) ?? 0
@@ -101,14 +163,22 @@ function createTreeNavigator(threshold: number): TreeNavigator {
     const isTerminal = score > 21 || (canStand && score >= threshold)
 
     if (isTerminal) {
-      countMemo.set(key, 1)
-      return 1
+      const terminalCount = hasMatched ? 1 : 0
+      countMemo.set(key, terminalCount)
+      return terminalCount
     }
 
-    let total = finalHandsOnly ? 0 : 1
+    let total = finalHandsOnly ? 0 : hasMatched ? 1 : 0
 
     for (const card of CARD_OPTIONS) {
-      total += countFromTotals(nextTotals(totals, card.values), cardCount + 1, finalHandsOnly)
+      const transition = advanceMatch(matchState, card.label)
+      total += countFromTotals(
+        nextTotals(totals, card.values),
+        cardCount + 1,
+        finalHandsOnly,
+        transition.state,
+        hasMatched || transition.matched,
+      )
     }
 
     countMemo.set(key, total)
@@ -119,12 +189,12 @@ function createTreeNavigator(threshold: number): TreeNavigator {
     let skip = pageIndex * pageSize
     const items: CombinationItem[] = []
 
-    const walk = (totals: number[], cards: string[], probability: number): void => {
+    const walk = (totals: number[], cards: string[], probability: number, matchState: number, hasMatched: boolean): void => {
       const score = bestScore(totals)
       const isTerminal = score > 21 || (cards.length >= 2 && score >= threshold)
       const shouldIncludeCurrent = cards.length > 0 && (!finalHandsOnly || isTerminal)
 
-      if (shouldIncludeCurrent) {
+      if (shouldIncludeCurrent && hasMatched) {
         if (skip > 0) {
           skip -= 1
         } else if (items.length < pageSize) {
@@ -143,7 +213,9 @@ function createTreeNavigator(threshold: number): TreeNavigator {
 
       for (const card of CARD_OPTIONS) {
         const next = nextTotals(totals, card.values)
-        const branchCount = countFromTotals(next, cards.length + 1, finalHandsOnly)
+        const transition = advanceMatch(matchState, card.label)
+        const nextHasMatched = hasMatched || transition.matched
+        const branchCount = countFromTotals(next, cards.length + 1, finalHandsOnly, transition.state, nextHasMatched)
 
         if (skip >= branchCount) {
           skip -= branchCount
@@ -154,7 +226,7 @@ function createTreeNavigator(threshold: number): TreeNavigator {
           return
         }
 
-        walk(next, [...cards, card.label], probability * card.probability)
+        walk(next, [...cards, card.label], probability * card.probability, transition.state, nextHasMatched)
 
         if (items.length >= pageSize) {
           return
@@ -162,12 +234,13 @@ function createTreeNavigator(threshold: number): TreeNavigator {
       }
     }
 
-    walk([0], [], 1)
+    walk([0], [], 1, 0, sequenceTokens.length === 0)
     return items
   }
 
   return {
-    getTotalCombinations: (finalHandsOnly: boolean) => countFromTotals([0], 0, finalHandsOnly),
+    getTotalCombinations: (finalHandsOnly: boolean) =>
+      countFromTotals([0], 0, finalHandsOnly, 0, sequenceTokens.length === 0),
     getPage,
   }
 }
@@ -175,9 +248,16 @@ function createTreeNavigator(threshold: number): TreeNavigator {
 function CombinationsTreePage() {
   const [standThreshold, setStandThreshold] = useState<number>(17)
   const [finalHandsOnly, setFinalHandsOnly] = useState<boolean>(true)
+  const [sequenceQuery, setSequenceQuery] = useState<string>('')
   const [page, setPage] = useState<number>(0)
 
-  const treeNavigator = useMemo(() => createTreeNavigator(standThreshold), [standThreshold])
+  const sequenceTokens = useMemo(() => parseSequenceQuery(sequenceQuery), [sequenceQuery])
+  const sequenceKey = useMemo(() => sequenceTokens.join('|'), [sequenceTokens])
+
+  const treeNavigator = useMemo(
+    () => createTreeNavigator(standThreshold, sequenceTokens),
+    [sequenceKey, standThreshold],
+  )
 
   const totalCombinations = useMemo(
     () => treeNavigator.getTotalCombinations(finalHandsOnly),
@@ -194,7 +274,7 @@ function CombinationsTreePage() {
 
   useEffect(() => {
     setPage(0)
-  }, [finalHandsOnly, standThreshold])
+  }, [finalHandsOnly, sequenceKey, standThreshold])
 
   return (
     <main className="combination-page">
@@ -228,6 +308,17 @@ function CombinationsTreePage() {
           />
           Final hands only
         </label>
+
+        <label className="search-row" htmlFor="sequence-search">
+          Card sequence filter
+        </label>
+        <input
+          id="sequence-search"
+          type="search"
+          value={sequenceQuery}
+          onChange={(event) => setSequenceQuery(event.target.value)}
+          placeholder="Example: A 10 or 5, 6, 7"
+        />
       </section>
 
       <section className="summary" aria-live="polite">

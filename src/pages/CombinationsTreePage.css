@@ -77,6 +77,28 @@
   accent-color: var(--accent);
 }
 
+.search-row {
+  margin-top: 0.95rem;
+  display: block;
+  font-weight: 700;
+}
+
+.controls input[type='search'] {
+  margin-top: 0.35rem;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.65rem;
+  font: inherit;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.controls input[type='search']:focus {
+  outline: 2px solid rgba(15, 125, 81, 0.35);
+  outline-offset: 1px;
+}
+
 .summary {
   display: flex;
   justify-content: space-between;
