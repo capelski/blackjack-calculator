@@ -7,7 +7,7 @@ type BlackjackCard = {
   probability: number
 }
 
-type CombinationAction = 'Stand' | 'Bust'
+type CombinationAction = 'Stand' | 'Bust' | 'Hit'
 
 type CombinationItem = {
   score: string
@@ -17,8 +17,8 @@ type CombinationItem = {
 }
 
 type TreeNavigator = {
-  getTotalCombinations: () => number
-  getPage: (pageIndex: number, pageSize: number) => CombinationItem[]
+  getTotalCombinations: (finalHandsOnly: boolean) => number
+  getPage: (pageIndex: number, pageSize: number, finalHandsOnly: boolean) => CombinationItem[]
 }
 
 const CARD_OPTIONS = [
@@ -89,8 +89,8 @@ function formatProbability(probability: number): string {
 function createTreeNavigator(threshold: number): TreeNavigator {
   const countMemo = new Map<string, number>()
 
-  const countFromTotals = (totals: number[], cardCount: number): number => {
-    const key = `${cardCount}:${normalizeTotals(totals).join(',')}`
+  const countFromTotals = (totals: number[], cardCount: number, finalHandsOnly: boolean): number => {
+    const key = `${finalHandsOnly ? 'final' : 'all'}:${cardCount}:${normalizeTotals(totals).join(',')}`
 
     if (countMemo.has(key)) {
       return countMemo.get(key) ?? 0
@@ -98,51 +98,52 @@ function createTreeNavigator(threshold: number): TreeNavigator {
 
     const score = bestScore(totals)
     const canStand = cardCount >= 2
+    const isTerminal = score > 21 || (canStand && score >= threshold)
 
-    if (score > 21 || (canStand && score >= threshold)) {
+    if (isTerminal) {
       countMemo.set(key, 1)
       return 1
     }
 
-    let total = 0
+    let total = finalHandsOnly ? 0 : 1
 
     for (const card of CARD_OPTIONS) {
-      total += countFromTotals(nextTotals(totals, card.values), cardCount + 1)
+      total += countFromTotals(nextTotals(totals, card.values), cardCount + 1, finalHandsOnly)
     }
 
     countMemo.set(key, total)
     return total
   }
 
-  const getPage = (pageIndex: number, pageSize: number): CombinationItem[] => {
+  const getPage = (pageIndex: number, pageSize: number, finalHandsOnly: boolean): CombinationItem[] => {
     let skip = pageIndex * pageSize
     const items: CombinationItem[] = []
 
     const walk = (totals: number[], cards: string[], probability: number): void => {
       const score = bestScore(totals)
       const isTerminal = score > 21 || (cards.length >= 2 && score >= threshold)
+      const shouldIncludeCurrent = cards.length > 0 && (!finalHandsOnly || isTerminal)
 
-      if (isTerminal) {
+      if (shouldIncludeCurrent) {
         if (skip > 0) {
           skip -= 1
-          return
-        }
-
-        if (items.length < pageSize) {
+        } else if (items.length < pageSize) {
           items.push({
             score: scoreLabel(totals),
             cards: cards.join(', '),
             probability,
-            action: score > 21 ? 'Bust' : 'Stand',
+            action: isTerminal ? (score > 21 ? 'Bust' : 'Stand') : 'Hit',
           })
         }
+      }
 
+      if (isTerminal) {
         return
       }
 
       for (const card of CARD_OPTIONS) {
         const next = nextTotals(totals, card.values)
-        const branchCount = countFromTotals(next, cards.length + 1)
+        const branchCount = countFromTotals(next, cards.length + 1, finalHandsOnly)
 
         if (skip >= branchCount) {
           skip -= branchCount
@@ -166,33 +167,34 @@ function createTreeNavigator(threshold: number): TreeNavigator {
   }
 
   return {
-    getTotalCombinations: () => countFromTotals([0], 0),
+    getTotalCombinations: (finalHandsOnly: boolean) => countFromTotals([0], 0, finalHandsOnly),
     getPage,
   }
 }
 
 function CombinationsTreePage() {
   const [standThreshold, setStandThreshold] = useState<number>(17)
+  const [finalHandsOnly, setFinalHandsOnly] = useState<boolean>(true)
   const [page, setPage] = useState<number>(0)
 
   const treeNavigator = useMemo(() => createTreeNavigator(standThreshold), [standThreshold])
 
   const totalCombinations = useMemo(
-    () => treeNavigator.getTotalCombinations(),
-    [treeNavigator],
+    () => treeNavigator.getTotalCombinations(finalHandsOnly),
+    [finalHandsOnly, treeNavigator],
   )
 
   const totalPages = Math.max(1, Math.ceil(totalCombinations / PAGE_SIZE))
   const safePage = Math.min(page, totalPages - 1)
 
   const combinations = useMemo(
-    () => treeNavigator.getPage(safePage, PAGE_SIZE),
-    [safePage, treeNavigator],
+    () => treeNavigator.getPage(safePage, PAGE_SIZE, finalHandsOnly),
+    [finalHandsOnly, safePage, treeNavigator],
   )
 
   useEffect(() => {
     setPage(0)
-  }, [standThreshold])
+  }, [finalHandsOnly, standThreshold])
 
   return (
     <main className="combination-page">
@@ -216,6 +218,16 @@ function CombinationsTreePage() {
           value={standThreshold}
           onChange={(event) => setStandThreshold(Number(event.target.value))}
         />
+
+        <label className="checkbox-row" htmlFor="final-hands-only">
+          <input
+            id="final-hands-only"
+            type="checkbox"
+            checked={finalHandsOnly}
+            onChange={(event) => setFinalHandsOnly(event.target.checked)}
+          />
+          Final hands only
+        </label>
       </section>
 
       <section className="summary" aria-live="polite">

@@ -62,6 +62,21 @@
   accent-color: var(--accent);
 }
 
+.checkbox-row {
+  margin-top: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.checkbox-row input[type='checkbox'] {
+  inline-size: 1rem;
+  block-size: 1rem;
+  accent-color: var(--accent);
+}
+
 .summary {
   display: flex;
   justify-content: space-between;
@@ -177,6 +192,11 @@
 .cell.action.bust {
   color: #8e2f12;
   background: rgba(214, 111, 72, 0.2);
+}
+
+.cell.action.hit {
+  color: #7b5a05;
+  background: rgba(209, 176, 80, 0.25);
 }
 
 @media (max-width: 760px) {
