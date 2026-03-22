@@ -241,24 +241,33 @@ function CombinationsTreePage() {
         </button>
       </section>
 
-      <ul className="combination-list" aria-label="Blackjack hand combinations">
-        {combinations.map((combination, index) => (
-          <li key={`${safePage}-${index}`} className="combination-item">
-            <p>
-              <strong>Hand score:</strong> {combination.score}
-            </p>
-            <p>
-              <strong>Cards:</strong> {combination.cards}
-            </p>
-            <p>
-              <strong>Probability:</strong> {formatProbability(combination.probability)}
-            </p>
-            <p>
-              <strong>Action:</strong> {combination.action}
-            </p>
-          </li>
-        ))}
-      </ul>
+      <section className="combination-table" aria-label="Blackjack hand combinations">
+        <div className="combination-table-header" role="row">
+          <span role="columnheader">Hand score</span>
+          <span role="columnheader">Cards</span>
+          <span role="columnheader">Probability</span>
+          <span role="columnheader">Action</span>
+        </div>
+
+        <ul className="combination-list">
+          {combinations.map((combination, index) => (
+            <li key={`${safePage}-${index}`} className="combination-row" role="row">
+              <span className="cell score" data-label="Hand score" role="cell">
+                {combination.score}
+              </span>
+              <span className="cell cards" data-label="Cards" role="cell">
+                {combination.cards}
+              </span>
+              <span className="cell probability" data-label="Probability" role="cell">
+                {formatProbability(combination.probability)}
+              </span>
+              <span className={`cell action ${combination.action.toLowerCase()}`} data-label="Action" role="cell">
+                {combination.action}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
     </main>
   )
 }
