@@ -1,6 +1,26 @@
 import { useEffect, useMemo, useState } from 'react'
 import './CombinationsTreePage.css'
 
+type BlackjackCard = {
+  label: string
+  values: number[]
+  probability: number
+}
+
+type CombinationAction = 'Stand' | 'Bust'
+
+type CombinationItem = {
+  score: string
+  cards: string
+  probability: number
+  action: CombinationAction
+}
+
+type TreeNavigator = {
+  getTotalCombinations: () => number
+  getPage: (pageIndex: number, pageSize: number) => CombinationItem[]
+}
+
 const CARD_OPTIONS = [
   { label: 'A', values: [1, 11], probability: 1 / 13 },
   { label: '2', values: [2], probability: 1 / 13 },
@@ -12,16 +32,16 @@ const CARD_OPTIONS = [
   { label: '8', values: [8], probability: 1 / 13 },
   { label: '9', values: [9], probability: 1 / 13 },
   { label: '10', values: [10], probability: 4 / 13 },
-]
+] as const satisfies readonly BlackjackCard[]
 
 const PAGE_SIZE = 150
 
-function normalizeTotals(totals) {
+function normalizeTotals(totals: number[]): number[] {
   return [...new Set(totals)].sort((a, b) => a - b)
 }
 
-function nextTotals(totals, cardValues) {
-  const produced = []
+function nextTotals(totals: number[], cardValues: number[]): number[] {
+  const produced: number[] = []
 
   for (const current of totals) {
     for (const nextValue of cardValues) {
@@ -32,7 +52,7 @@ function nextTotals(totals, cardValues) {
   return normalizeTotals(produced)
 }
 
-function bestScore(totals) {
+function bestScore(totals: number[]): number {
   const underOrEqual = totals.filter((score) => score <= 21)
 
   if (underOrEqual.length > 0) {
@@ -42,7 +62,7 @@ function bestScore(totals) {
   return Math.min(...totals)
 }
 
-function scoreLabel(totals) {
+function scoreLabel(totals: number[]): string {
   const underOrEqual = totals.filter((score) => score <= 21)
 
   if (underOrEqual.length === 0) {
@@ -56,7 +76,7 @@ function scoreLabel(totals) {
   return `${Math.max(...underOrEqual)} (soft ${Math.min(...underOrEqual)})`
 }
 
-function formatProbability(probability) {
+function formatProbability(probability: number): string {
   const percentage = probability * 100
 
   if (percentage >= 0.01) {
@@ -66,14 +86,14 @@ function formatProbability(probability) {
   return `${percentage.toExponential(2)}%`
 }
 
-function createTreeNavigator(threshold) {
-  const countMemo = new Map()
+function createTreeNavigator(threshold: number): TreeNavigator {
+  const countMemo = new Map<string, number>()
 
-  const countFromTotals = (totals) => {
+  const countFromTotals = (totals: number[]): number => {
     const key = normalizeTotals(totals).join(',')
 
     if (countMemo.has(key)) {
-      return countMemo.get(key)
+      return countMemo.get(key) ?? 0
     }
 
     const score = bestScore(totals)
@@ -93,11 +113,11 @@ function createTreeNavigator(threshold) {
     return total
   }
 
-  const getPage = (pageIndex, pageSize) => {
+  const getPage = (pageIndex: number, pageSize: number): CombinationItem[] => {
     let skip = pageIndex * pageSize
-    const items = []
+    const items: CombinationItem[] = []
 
-    const walk = (totals, cards, probability) => {
+    const walk = (totals: number[], cards: string[], probability: number): void => {
       const score = bestScore(totals)
       const isTerminal = score >= threshold || score > 21
 
@@ -151,8 +171,8 @@ function createTreeNavigator(threshold) {
 }
 
 function CombinationsTreePage() {
-  const [standThreshold, setStandThreshold] = useState(17)
-  const [page, setPage] = useState(0)
+  const [standThreshold, setStandThreshold] = useState<number>(17)
+  const [page, setPage] = useState<number>(0)
 
   const treeNavigator = useMemo(() => createTreeNavigator(standThreshold), [standThreshold])
 
