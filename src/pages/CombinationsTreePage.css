@@ -1,0 +1,138 @@
+.combination-page {
+  --paper: #f8f2e8;
+  --paper-strong: #fff8ef;
+  --ink: #1e1a17;
+  --muted: #6a5747;
+  --accent: #0f7d51;
+  --accent-strong: #0a5d3b;
+  --border: #d8c4aa;
+
+  max-width: 1080px;
+  margin: 2rem auto;
+  padding: 2rem;
+  border-radius: 20px;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 12% 15%, rgba(255, 255, 255, 0.7), transparent 26%),
+    radial-gradient(circle at 88% 0%, rgba(15, 125, 81, 0.18), transparent 28%),
+    linear-gradient(180deg, var(--paper-strong), var(--paper));
+  box-shadow: 0 20px 55px rgba(46, 35, 20, 0.18);
+}
+
+.combination-header {
+  margin-bottom: 1.4rem;
+}
+
+.eyebrow {
+  margin: 0;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+.combination-header h1 {
+  margin: 0.35rem 0;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.05;
+}
+
+.intro {
+  margin: 0;
+  color: var(--muted);
+  max-width: 68ch;
+}
+
+.controls {
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.controls label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 0.7rem;
+}
+
+.controls input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.summary p {
+  margin: 0;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.pagination button {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+  transition: transform 0.14s ease, background-color 0.14s ease;
+}
+
+.pagination button:hover:not(:disabled) {
+  background: var(--accent-strong);
+  transform: translateY(-1px);
+}
+
+.pagination button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.combination-list {
+  margin: 1.4rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.combination-item {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.combination-item p {
+  margin: 0.2rem 0;
+}
+
+@media (max-width: 760px) {
+  .combination-page {
+    margin: 0;
+    border-radius: 0;
+    min-height: 100vh;
+    padding: 1.25rem;
+  }
+
+  .summary {
+    flex-direction: column;
+  }
+}
