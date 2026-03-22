@@ -89,16 +89,17 @@ function formatProbability(probability: number): string {
 function createTreeNavigator(threshold: number): TreeNavigator {
   const countMemo = new Map<string, number>()
 
-  const countFromTotals = (totals: number[]): number => {
-    const key = normalizeTotals(totals).join(',')
+  const countFromTotals = (totals: number[], cardCount: number): number => {
+    const key = `${cardCount}:${normalizeTotals(totals).join(',')}`
 
     if (countMemo.has(key)) {
       return countMemo.get(key) ?? 0
     }
 
     const score = bestScore(totals)
+    const canStand = cardCount >= 2
 
-    if (score >= threshold || score > 21) {
+    if (score > 21 || (canStand && score >= threshold)) {
       countMemo.set(key, 1)
       return 1
     }
@@ -106,7 +107,7 @@ function createTreeNavigator(threshold: number): TreeNavigator {
     let total = 0
 
     for (const card of CARD_OPTIONS) {
-      total += countFromTotals(nextTotals(totals, card.values))
+      total += countFromTotals(nextTotals(totals, card.values), cardCount + 1)
     }
 
     countMemo.set(key, total)
@@ -119,7 +120,7 @@ function createTreeNavigator(threshold: number): TreeNavigator {
 
     const walk = (totals: number[], cards: string[], probability: number): void => {
       const score = bestScore(totals)
-      const isTerminal = score >= threshold || score > 21
+      const isTerminal = score > 21 || (cards.length >= 2 && score >= threshold)
 
       if (isTerminal) {
         if (skip > 0) {
@@ -141,7 +142,7 @@ function createTreeNavigator(threshold: number): TreeNavigator {
 
       for (const card of CARD_OPTIONS) {
         const next = nextTotals(totals, card.values)
-        const branchCount = countFromTotals(next)
+        const branchCount = countFromTotals(next, cards.length + 1)
 
         if (skip >= branchCount) {
           skip -= branchCount
@@ -165,7 +166,7 @@ function createTreeNavigator(threshold: number): TreeNavigator {
   }
 
   return {
-    getTotalCombinations: () => countFromTotals([0]),
+    getTotalCombinations: () => countFromTotals([0], 0),
     getPage,
   }
 }
