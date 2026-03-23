@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:bdd": "TS_NODE_PROJECT=tsconfig.cucumber.json cucumber-js tests/cucumber/features/**/*.feature --loader ts-node/esm --import tests/cucumber/steps/**/*.ts",
+    "test": "npm run test:bdd"
   },
   "dependencies": {
     "react": "^19.2.4",
@@ -15,7 +17,9 @@
     "react-router-dom": "^7.13.1"
   },
   "devDependencies": {
+    "@cucumber/cucumber": "^12.7.0",
     "@eslint/js": "^9.39.4",
+    "@types/node": "^25.5.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
@@ -23,6 +27,8 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.2",
     "vite": "^8.0.1"
   }
 }
