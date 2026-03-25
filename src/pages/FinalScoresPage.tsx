@@ -36,6 +36,20 @@ function compareFinalScores(a: FinalScoreGroup, b: FinalScoreGroup): number {
   return bValue - aValue
 }
 
+function normalizedFinalScore(score: string): string {
+  const numericScore = numericPrefix(score)
+
+  if (!Number.isFinite(numericScore)) {
+    return score
+  }
+
+  if (score.includes('(bust)')) {
+    return `${numericScore} (bust)`
+  }
+
+  return `${numericScore}`
+}
+
 function FinalScoresPage() {
   const [standThreshold, setStandThreshold] = useState<number>(17)
   const [openScore, setOpenScore] = useState<string | null>(null)
@@ -58,7 +72,8 @@ function FinalScoresPage() {
     const grouped = new Map<string, FinalScoreGroup>()
 
     for (const combination of finalCombinations) {
-      const existing = grouped.get(combination.score)
+      const normalizedScore = normalizedFinalScore(combination.score)
+      const existing = grouped.get(normalizedScore)
 
       if (existing) {
         existing.probability += combination.probability
@@ -66,8 +81,8 @@ function FinalScoresPage() {
         continue
       }
 
-      grouped.set(combination.score, {
-        score: combination.score,
+      grouped.set(normalizedScore, {
+        score: normalizedScore,
         probability: combination.probability,
         combinations: [combination],
       })
