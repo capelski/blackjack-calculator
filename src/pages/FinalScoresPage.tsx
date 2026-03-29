@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import './CombinationsTreePage.css'
+import './FinalScoresPage.css'
 import type { CombinationItem } from './combinationsTreeLogic'
 import {
   PAGE_SIZE,
