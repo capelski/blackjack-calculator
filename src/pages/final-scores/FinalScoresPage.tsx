@@ -6,6 +6,7 @@ import {
   createTreeNavigator,
   formatProbability,
 } from '../common/combinationsTreeLogic'
+import StandThresholdSlider from '../common/components/StandThresholdSlider'
 import FinalScoreModal from './components/FinalScoreModal'
 
 type FinalScoreGroup = {
@@ -108,15 +109,10 @@ function FinalScoresPage() {
       </header>
 
       <section className="controls" aria-label="Stand threshold controls">
-        <label htmlFor="final-scores-threshold">Stand threshold: {standThreshold}</label>
-        <input
-          id="final-scores-threshold"
-          type="range"
-          min="4"
-          max="20"
-          step="1"
+        <StandThresholdSlider
           value={standThreshold}
-          onChange={(event) => setStandThreshold(Number(event.target.value))}
+          inputId="final-scores-threshold"
+          onChange={setStandThreshold}
         />
       </section>
 

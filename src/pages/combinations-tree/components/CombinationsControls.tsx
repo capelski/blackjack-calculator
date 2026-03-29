@@ -1,3 +1,5 @@
+import StandThresholdSlider from '../../common/components/StandThresholdSlider'
+
 type CombinationsControlsProps = {
   standThreshold: number
   finalHandsOnly: boolean
@@ -17,15 +19,10 @@ function CombinationsControls({
 }: CombinationsControlsProps) {
   return (
     <section className="controls" aria-label="Stand threshold controls">
-      <label htmlFor="threshold-slider">Stand threshold: {standThreshold}</label>
-      <input
-        id="threshold-slider"
-        type="range"
-        min="4"
-        max="20"
-        step="1"
+      <StandThresholdSlider
         value={standThreshold}
-        onChange={(event) => onThresholdChange(Number(event.target.value))}
+        inputId="threshold-slider"
+        onChange={onThresholdChange}
       />
 
       <label className="checkbox-row" htmlFor="final-hands-only">
