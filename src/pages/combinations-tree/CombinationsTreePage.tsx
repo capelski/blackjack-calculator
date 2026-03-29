@@ -8,7 +8,7 @@ import {
   PAGE_SIZE,
   createTreeNavigator,
   parseSequenceQuery,
-} from './combinationsTreeLogic'
+} from '../common/combinationsTreeLogic'
 
 function CombinationsTreePage() {
   const [standThreshold, setStandThreshold] = useState<number>(17)

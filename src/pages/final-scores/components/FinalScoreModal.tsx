@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import type { CombinationItem } from '../../combinations-tree/combinationsTreeLogic'
+import type { CombinationItem } from '../../common/combinationsTreeLogic'
 import HandOutcomesTable from '../../common/components/HandOutcomesTable'
 
 type FinalScoreModalProps = {

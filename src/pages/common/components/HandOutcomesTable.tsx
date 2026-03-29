@@ -1,5 +1,5 @@
-import type { CombinationItem } from '../../combinations-tree/combinationsTreeLogic'
-import { formatProbability } from '../../combinations-tree/combinationsTreeLogic'
+import type { CombinationItem } from '../combinationsTreeLogic'
+import { formatProbability } from '../combinationsTreeLogic'
 
 type HandOutcomesTableProps = {
   combinations: CombinationItem[]
