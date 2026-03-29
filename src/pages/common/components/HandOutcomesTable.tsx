@@ -1,12 +1,12 @@
-import type { CombinationItem } from '../combinationsTreeLogic'
-import { formatProbability } from '../combinationsTreeLogic'
+import type { CombinationItem } from '../../combinations-tree/combinationsTreeLogic'
+import { formatProbability } from '../../combinations-tree/combinationsTreeLogic'
 
-type CombinationsTableProps = {
+type HandOutcomesTableProps = {
   combinations: CombinationItem[]
-  safePage: number
+  keyPrefix: string
 }
 
-function CombinationsTable({ combinations, safePage }: CombinationsTableProps) {
+function HandOutcomesTable({ combinations, keyPrefix }: HandOutcomesTableProps) {
   return (
     <section className="combination-table" aria-label="Blackjack hand combinations">
       <div className="combination-table-header" role="row">
@@ -18,7 +18,7 @@ function CombinationsTable({ combinations, safePage }: CombinationsTableProps) {
 
       <ul className="combination-list">
         {combinations.map((combination, index) => (
-          <li key={`${safePage}-${index}`} className="combination-row" role="row">
+          <li key={`${keyPrefix}-${index}`} className="combination-row" role="row">
             <span className="cell score" data-label="Hand score" role="cell">
               {combination.score}
             </span>
@@ -38,4 +38,4 @@ function CombinationsTable({ combinations, safePage }: CombinationsTableProps) {
   )
 }
 
-export default CombinationsTable
+export default HandOutcomesTable

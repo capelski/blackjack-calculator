@@ -3,7 +3,7 @@ import './CombinationsTreePage.css'
 import CombinationsControls from './components/CombinationsControls'
 import CombinationsPagination from './components/CombinationsPagination'
 import CombinationsSummary from './components/CombinationsSummary'
-import CombinationsTable from './components/CombinationsTable'
+import HandOutcomesTable from '../common/components/HandOutcomesTable'
 import {
   PAGE_SIZE,
   createTreeNavigator,
@@ -74,7 +74,7 @@ function CombinationsTreePage() {
         onNext={() => setPage((current) => Math.min(totalPages - 1, current + 1))}
       />
 
-      <CombinationsTable combinations={combinations} safePage={safePage} />
+      <HandOutcomesTable combinations={combinations} keyPrefix={`tree-page-${safePage}`} />
     </main>
   )
 }
