@@ -6,7 +6,7 @@ import {
   createTreeNavigator,
   formatProbability,
   parseSequenceQuery,
-} from '../../../src/pages/combinationsTreeLogic.ts'
+} from '../../../src/pages/combinations-tree/combinationsTreeLogic.ts'
 
 type WorldState = {
   navigator: ReturnType<typeof createTreeNavigator> | null

@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import type { CombinationItem } from '../combinationsTreeLogic'
-import { formatProbability } from '../combinationsTreeLogic'
+import type { CombinationItem } from '../../combinations-tree/combinationsTreeLogic'
+import { formatProbability } from '../../combinations-tree/combinationsTreeLogic'
 
 type FinalScoreModalProps = {
   isOpen: boolean

@@ -1,12 +1,11 @@
 import { useMemo, useState } from 'react'
-import './CombinationsTreePage.css'
 import './FinalScoresPage.css'
-import type { CombinationItem } from './combinationsTreeLogic'
+import type { CombinationItem } from '../combinations-tree/combinationsTreeLogic'
 import {
   PAGE_SIZE,
   createTreeNavigator,
   formatProbability,
-} from './combinationsTreeLogic'
+} from '../combinations-tree/combinationsTreeLogic'
 import FinalScoreModal from './components/FinalScoreModal'
 
 type FinalScoreGroup = {

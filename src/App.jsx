@@ -1,7 +1,7 @@
 import { NavLink, Navigate, Route, Routes } from 'react-router-dom'
 import './App.css'
-import CombinationsTreePage from './pages/CombinationsTreePage'
-import FinalScoresPage from './pages/FinalScoresPage'
+import CombinationsTreePage from './pages/combinations-tree/CombinationsTreePage'
+import FinalScoresPage from './pages/final-scores/FinalScoresPage'
 
 function App() {
   return (

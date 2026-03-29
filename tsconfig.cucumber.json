@@ -11,5 +11,5 @@
     "skipLibCheck": true,
     "types": ["node", "@cucumber/cucumber"]
   },
-  "include": ["src/pages/combinationsTreeLogic.ts", "tests/cucumber/**/*.ts"]
+  "include": ["src/pages/combinations-tree/combinationsTreeLogic.ts", "tests/cucumber/**/*.ts"]
 }
