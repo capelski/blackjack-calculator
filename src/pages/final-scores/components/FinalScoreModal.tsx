@@ -48,7 +48,11 @@ function FinalScoreModal({ isOpen, title, combinations, onClose }: FinalScoreMod
         <p className="modal-summary">Combinations in this final score: {combinations.length.toLocaleString()}</p>
 
         <div className="modal-table">
-          <HandOutcomesTable combinations={combinations} keyPrefix="final-score-modal" />
+          <HandOutcomesTable
+            combinations={combinations}
+            keyPrefix="final-score-modal"
+            mode="cards-probability"
+          />
         </div>
       </section>
     </div>

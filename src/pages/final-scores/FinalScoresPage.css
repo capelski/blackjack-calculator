@@ -78,6 +78,11 @@
   background: rgba(255, 255, 255, 0.7);
 }
 
+.modal-table .compact-columns .combination-table-header,
+.modal-table .compact-columns .combination-row {
+  grid-template-columns: 3fr 1.2fr;
+}
+
 @media (max-width: 760px) {
   .final-scores-header,
   .modal-table .combination-table-header {
