@@ -15,10 +15,6 @@ export function compareFinalScores(a: FinalScoreGroup, b: FinalScoreGroup): numb
   const aBlackjack = a.score === 'Blackjack'
   const bBlackjack = b.score === 'Blackjack'
 
-  if (aBlackjack !== bBlackjack) {
-    return aBlackjack ? -1 : 1
-  }
-
   const aValue = numericPrefix(a.score)
   const bValue = numericPrefix(b.score)
   const aBust = a.score === '22+'
@@ -30,6 +26,10 @@ export function compareFinalScores(a: FinalScoreGroup, b: FinalScoreGroup): numb
 
   if (aBust && bBust) {
     return aValue - bValue
+  }
+
+  if (aBlackjack !== bBlackjack) {
+    return aBlackjack ? 1 : -1
   }
 
   if (!Number.isFinite(aValue) && !Number.isFinite(bValue)) {
@@ -44,7 +44,7 @@ export function compareFinalScores(a: FinalScoreGroup, b: FinalScoreGroup): numb
     return -1
   }
 
-  return bValue - aValue
+  return aValue - bValue
 }
 
 export function normalizedFinalScore(score: string): string {
