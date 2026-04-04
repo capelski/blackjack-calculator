@@ -1,26 +1,54 @@
-.expected-results-header,
-.expected-results-row {
-  grid-template-columns: 1fr 1.3fr 1.3fr 1.5fr;
+.expected-matrix-shell {
+  padding: 0;
 }
 
-.expected-delta {
-  font-weight: 700;
+.expected-matrix-scroll {
+  overflow: auto;
 }
 
-.expected-delta.positive {
-  color: #0a5d3b;
+.expected-matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 820px;
 }
 
-.expected-delta.negative {
-  color: #8e2f12;
+.expected-matrix-table th,
+.expected-matrix-table td {
+  border: 1px solid rgba(216, 196, 170, 0.7);
+  padding: 0.5rem 0.65rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.expected-matrix-table thead th {
+  position: sticky;
+  top: 0;
+  background: rgba(15, 125, 81, 0.12);
+  color: var(--accent-strong);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.78rem;
+}
+
+.expected-matrix-table th:first-child {
+  text-align: left;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.expected-matrix-table thead th:first-child {
+  z-index: 2;
+  background: rgba(15, 125, 81, 0.2);
+}
+
+.expected-matrix-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.35);
 }
 
 @media (max-width: 760px) {
-  .expected-results-header {
-    display: none;
-  }
-
-  .expected-results-row {
-    grid-template-columns: 1fr;
+  .expected-matrix-table {
+    min-width: 640px;
   }
 }

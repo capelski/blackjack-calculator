@@ -9,13 +9,6 @@ import {
 import StandThresholdSlider from '../common/components/StandThresholdSlider'
 import { compareFinalScores, normalizedFinalScore } from '../final-scores/finalScoresLogic'
 
-type ScoreComparisonRow = {
-  score: string
-  playerProbability: number
-  dealerProbability: number
-  delta: number
-}
-
 function collectFinalCombinations(standThreshold: number): CombinationItem[] {
   const treeNavigator = createTreeNavigator(standThreshold, [])
   const total = treeNavigator.getTotalCombinations(true)
@@ -59,29 +52,12 @@ function ExpectedResultsPage() {
 
   const dealerScores = useMemo(() => groupScores(collectFinalCombinations(17)), [])
 
-  const rows = useMemo(() => {
-    const labels = sortScores([...new Set([...playerScores.keys(), ...dealerScores.keys()])])
-
-    return labels.map((score) => {
-      const playerProbability = playerScores.get(score) ?? 0
-      const dealerProbability = dealerScores.get(score) ?? 0
-
-      return {
-        score,
-        playerProbability,
-        dealerProbability,
-        delta: playerProbability - dealerProbability,
-      }
-    })
-  }, [dealerScores, playerScores])
+  const playerLabels = useMemo(() => sortScores([...playerScores.keys()]), [playerScores])
+  const dealerLabels = useMemo(() => sortScores([...dealerScores.keys()]), [dealerScores])
 
   const playerBust = playerScores.get('22+') ?? 0
   const dealerBust = dealerScores.get('22+') ?? 0
   const bustDelta = playerBust - dealerBust
-  const positiveDeltaMass = rows.reduce(
-    (sum, row) => sum + (row.delta > 0 ? row.delta : 0),
-    0,
-  )
 
   return (
     <main className="combination-page">
@@ -106,40 +82,41 @@ function ExpectedResultsPage() {
         <p>Player threshold: {standThreshold}</p>
         <p>Dealer threshold: 17</p>
         <p>Player bust delta: {formatProbability(bustDelta)}</p>
-        <p>Positive delta mass: {formatProbability(positiveDeltaMass)}</p>
+        <p>Matrix cells: {(playerLabels.length * dealerLabels.length).toLocaleString()}</p>
       </section>
 
-      <section className="combination-table" aria-label="Expected results comparison table">
-        <div className="combination-table-header expected-results-header" role="row">
-          <span role="columnheader">Final score</span>
-          <span role="columnheader">Player probability</span>
-          <span role="columnheader">Dealer probability</span>
-          <span role="columnheader">Delta (player - dealer)</span>
-        </div>
+      <section className="combination-table expected-matrix-shell" aria-label="Expected results matrix">
+        <div className="expected-matrix-scroll">
+          <table className="expected-matrix-table">
+            <thead>
+              <tr>
+                <th scope="col">Player \ Dealer</th>
+                {dealerLabels.map((dealerScore) => (
+                  <th scope="col" key={dealerScore}>
+                    {dealerScore}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {playerLabels.map((playerScore) => {
+                const playerProbability = playerScores.get(playerScore) ?? 0
 
-        <ul className="combination-list">
-          {rows.map((row) => (
-            <li key={row.score} className="combination-row expected-results-row" role="row">
-              <span className="cell score" data-label="Final score" role="cell">
-                {row.score}
-              </span>
-              <span className="cell probability" data-label="Player probability" role="cell">
-                {formatProbability(row.playerProbability)}
-              </span>
-              <span className="cell probability" data-label="Dealer probability" role="cell">
-                {formatProbability(row.dealerProbability)}
-              </span>
-              <span
-                className={`cell expected-delta ${row.delta >= 0 ? 'positive' : 'negative'}`}
-                data-label="Delta (player - dealer)"
-                role="cell"
-              >
-                {row.delta >= 0 ? '+' : '-'}
-                {formatProbability(Math.abs(row.delta))}
-              </span>
-            </li>
-          ))}
-        </ul>
+                return (
+                  <tr key={playerScore}>
+                    <th scope="row">{playerScore}</th>
+                    {dealerLabels.map((dealerScore) => {
+                      const dealerProbability = dealerScores.get(dealerScore) ?? 0
+                      const product = playerProbability * dealerProbability
+
+                      return <td key={`${playerScore}-${dealerScore}`}>{formatProbability(product)}</td>
+                    })}
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
       </section>
     </main>
   )
