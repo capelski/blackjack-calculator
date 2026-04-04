@@ -2,6 +2,7 @@ import { NavLink, Navigate, Route, Routes } from 'react-router-dom'
 import './App.css'
 import CombinationsTreePage from './pages/combinations-tree/CombinationsTreePage'
 import FinalScoresPage from './pages/final-scores/FinalScoresPage'
+import ExpectedResultsPage from './pages/expected-results/ExpectedResultsPage'
 
 function App() {
   return (
@@ -19,12 +20,19 @@ function App() {
         >
           Final scores
         </NavLink>
+        <NavLink
+          to="/expected-results"
+          className={({ isActive }) => (isActive ? 'app-link active' : 'app-link')}
+        >
+          Expected results
+        </NavLink>
       </nav>
 
       <Routes>
         <Route path="/" element={<Navigate to="/combinations-tree" replace />} />
         <Route path="/combinations-tree" element={<CombinationsTreePage />} />
         <Route path="/final-scores" element={<FinalScoresPage />} />
+        <Route path="/expected-results" element={<ExpectedResultsPage />} />
         <Route path="*" element={<Navigate to="/combinations-tree" replace />} />
       </Routes>
     </div>

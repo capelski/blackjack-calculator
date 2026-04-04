@@ -1,0 +1,26 @@
+.expected-results-header,
+.expected-results-row {
+  grid-template-columns: 1fr 1.3fr 1.3fr 1.5fr;
+}
+
+.expected-delta {
+  font-weight: 700;
+}
+
+.expected-delta.positive {
+  color: #0a5d3b;
+}
+
+.expected-delta.negative {
+  color: #8e2f12;
+}
+
+@media (max-width: 760px) {
+  .expected-results-header {
+    display: none;
+  }
+
+  .expected-results-row {
+    grid-template-columns: 1fr;
+  }
+}
