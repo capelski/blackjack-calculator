@@ -25,8 +25,9 @@ Feature: Combinations tree logic
 
   Scenario: Return deterministic first page entries
     Given a tree navigator with threshold 4 and sequence ""
-    When I request page 0 with page size 3 for final hands only
-    Then the page should contain 3 combinations
+    When I request page 0 with page size 10 for final hands only
+    Then the page should contain 10 combinations
     And the first combination should have score "12 (soft 2)" cards "A, A" and action "Stand"
     And the first combination probability should be approximately 0.0059171597633
     And the third combination should have cards "A, 3"
+    And the 10th combination should have score "Blackjack" cards "A, 10" and action "Stand"

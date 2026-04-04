@@ -21,6 +21,13 @@ function numericPrefix(value: string): number {
 }
 
 function compareFinalScores(a: FinalScoreGroup, b: FinalScoreGroup): number {
+  const aBlackjack = a.score === 'Blackjack'
+  const bBlackjack = b.score === 'Blackjack'
+
+  if (aBlackjack !== bBlackjack) {
+    return aBlackjack ? -1 : 1
+  }
+
   const aValue = numericPrefix(a.score)
   const bValue = numericPrefix(b.score)
   const aBust = a.score.includes('(bust)')
@@ -32,6 +39,18 @@ function compareFinalScores(a: FinalScoreGroup, b: FinalScoreGroup): number {
 
   if (aBust && bBust) {
     return aValue - bValue
+  }
+
+  if (!Number.isFinite(aValue) && !Number.isFinite(bValue)) {
+    return a.score.localeCompare(b.score)
+  }
+
+  if (!Number.isFinite(aValue)) {
+    return 1
+  }
+
+  if (!Number.isFinite(bValue)) {
+    return -1
   }
 
   return bValue - aValue

@@ -96,3 +96,15 @@ Then('the third combination should have cards {string}', (expectedCards: string)
   assert.ok(third, 'Expected at least three page items')
   assert.equal(third.cards, expectedCards)
 })
+
+Then(
+  'the {int}th combination should have score {string} cards {string} and action {string}',
+  (ordinal: number, expectedScore: string, expectedCards: string, expectedAction: string) => {
+    const index = ordinal - 1
+    const item = state.pageItems[index]
+    assert.ok(item, `Expected page item at position ${ordinal}`)
+    assert.equal(item.score, expectedScore)
+    assert.equal(item.cards, expectedCards)
+    assert.equal(item.action, expectedAction)
+  },
+)

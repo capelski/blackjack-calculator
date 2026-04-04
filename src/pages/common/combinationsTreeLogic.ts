@@ -92,7 +92,15 @@ function bestScore(totals: number[]): number {
   return Math.min(...totals)
 }
 
-function scoreLabel(totals: number[]): string {
+function isBlackjack(cardCount: number, totals: number[]): boolean {
+  return cardCount === 2 && bestScore(totals) === 21
+}
+
+function scoreLabel(totals: number[], cardCount: number): string {
+  if (isBlackjack(cardCount, totals)) {
+    return 'Blackjack'
+  }
+
   const underOrEqual = totals.filter((score) => score <= 21)
 
   if (underOrEqual.length === 0) {
@@ -157,7 +165,8 @@ export function createTreeNavigator(threshold: number, sequenceTokens: string[])
 
     const score = bestScore(totals)
     const canStand = cardCount >= 2
-    const isTerminal = score > 21 || (canStand && score >= threshold)
+    const hasBlackjack = isBlackjack(cardCount, totals)
+    const isTerminal = hasBlackjack || score > 21 || (canStand && score >= threshold)
 
     if (isTerminal) {
       const terminalCount = hasMatched ? 1 : 0
@@ -188,7 +197,8 @@ export function createTreeNavigator(threshold: number, sequenceTokens: string[])
 
     const walk = (totals: number[], cards: string[], probability: number, matchState: number, hasMatched: boolean): void => {
       const score = bestScore(totals)
-      const isTerminal = score > 21 || (cards.length >= 2 && score >= threshold)
+      const hasBlackjack = isBlackjack(cards.length, totals)
+      const isTerminal = hasBlackjack || score > 21 || (cards.length >= 2 && score >= threshold)
       const shouldIncludeCurrent = cards.length > 0 && (!finalHandsOnly || isTerminal)
 
       if (shouldIncludeCurrent && hasMatched) {
@@ -196,7 +206,7 @@ export function createTreeNavigator(threshold: number, sequenceTokens: string[])
           skip -= 1
         } else if (items.length < pageSize) {
           items.push({
-            score: scoreLabel(totals),
+            score: scoreLabel(totals, cards.length),
             cards: cards.join(', '),
             probability,
             action: isTerminal ? (score > 21 ? 'Bust' : 'Stand') : 'Hit',
