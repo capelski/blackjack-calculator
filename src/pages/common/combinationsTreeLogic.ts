@@ -104,7 +104,7 @@ function scoreLabel(totals: number[], cardCount: number): string {
   const underOrEqual = totals.filter((score) => score <= 21)
 
   if (underOrEqual.length === 0) {
-    return `${Math.min(...totals)} (bust)`
+    return '22+'
   }
 
   if (underOrEqual.length === 1) {

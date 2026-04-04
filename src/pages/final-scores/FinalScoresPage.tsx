@@ -30,8 +30,8 @@ function compareFinalScores(a: FinalScoreGroup, b: FinalScoreGroup): number {
 
   const aValue = numericPrefix(a.score)
   const bValue = numericPrefix(b.score)
-  const aBust = a.score.includes('(bust)')
-  const bBust = b.score.includes('(bust)')
+  const aBust = a.score === '22+'
+  const bBust = b.score === '22+'
 
   if (aBust !== bBust) {
     return aBust ? 1 : -1
@@ -57,14 +57,14 @@ function compareFinalScores(a: FinalScoreGroup, b: FinalScoreGroup): number {
 }
 
 function normalizedFinalScore(score: string): string {
+  if (score === '22+') {
+    return '22+'
+  }
+
   const numericScore = numericPrefix(score)
 
   if (!Number.isFinite(numericScore)) {
     return score
-  }
-
-  if (score.includes('(bust)')) {
-    return `${numericScore} (bust)`
   }
 
   return `${numericScore}`
