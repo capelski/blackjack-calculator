@@ -112,6 +112,9 @@ function ExpectedResultsPage() {
     return totals
   }, [dealerLabels, dealerScores, playerLabels, playerScores])
 
+  const playerRoi = outcomeTotals.win - outcomeTotals.lose
+  const playerRoiClass = playerRoi >= 0 ? 'roi-positive' : 'roi-negative'
+
   return (
     <main className="combination-page">
       <header className="combination-header">
@@ -143,6 +146,10 @@ function ExpectedResultsPage() {
         <article className="expected-summary-card lose">
           <h2>Loses</h2>
           <p>{formatProbability(outcomeTotals.lose)}</p>
+        </article>
+        <article className={`expected-summary-card roi ${playerRoiClass}`}>
+          <h2>Player ROI</h2>
+          <p>{formatProbability(playerRoi)}</p>
         </article>
       </section>
 
