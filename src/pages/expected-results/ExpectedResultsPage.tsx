@@ -91,6 +91,27 @@ function ExpectedResultsPage() {
   const playerLabels = useMemo(() => sortScores([...playerScores.keys()]), [playerScores])
   const dealerLabels = useMemo(() => sortScores([...dealerScores.keys()]), [dealerScores])
 
+  const outcomeTotals = useMemo(() => {
+    const totals = {
+      win: 0,
+      draw: 0,
+      lose: 0,
+    }
+
+    for (const playerScore of playerLabels) {
+      const playerProbability = playerScores.get(playerScore) ?? 0
+
+      for (const dealerScore of dealerLabels) {
+        const dealerProbability = dealerScores.get(dealerScore) ?? 0
+        const product = playerProbability * dealerProbability
+        const result = outcomeClass(playerScore, dealerScore)
+        totals[result] += product
+      }
+    }
+
+    return totals
+  }, [dealerLabels, dealerScores, playerLabels, playerScores])
+
   return (
     <main className="combination-page">
       <header className="combination-header">
@@ -108,6 +129,21 @@ function ExpectedResultsPage() {
           inputId="expected-results-threshold"
           onChange={setStandThreshold}
         />
+      </section>
+
+      <section className="expected-summary" aria-label="Expected outcomes summary">
+        <article className="expected-summary-card win">
+          <h2>Wins</h2>
+          <p>{formatProbability(outcomeTotals.win)}</p>
+        </article>
+        <article className="expected-summary-card draw">
+          <h2>Draws</h2>
+          <p>{formatProbability(outcomeTotals.draw)}</p>
+        </article>
+        <article className="expected-summary-card lose">
+          <h2>Loses</h2>
+          <p>{formatProbability(outcomeTotals.lose)}</p>
+        </article>
       </section>
 
       <section className="combination-table expected-matrix-shell" aria-label="Expected results matrix">
