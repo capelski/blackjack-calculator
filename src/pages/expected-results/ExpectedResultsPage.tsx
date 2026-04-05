@@ -7,7 +7,11 @@ import {
   formatProbability,
 } from '../common/combinationsTreeLogic'
 import StandThresholdSlider from '../common/components/StandThresholdSlider'
-import { compareFinalScores, normalizedFinalScore } from '../final-scores/finalScoresLogic'
+import {
+  compareFinalScores,
+  normalizedFinalScore,
+  numericPrefix,
+} from '../final-scores/finalScoresLogic'
 
 function collectFinalCombinations(standThreshold: number): CombinationItem[] {
   const treeNavigator = createTreeNavigator(standThreshold, [])
@@ -42,6 +46,38 @@ function sortScores(scores: string[]): string[] {
   )
 }
 
+function outcomeClass(playerScore: string, dealerScore: string): 'win' | 'draw' | 'lose' {
+  const playerBust = playerScore === '22+'
+  const dealerBust = dealerScore === '22+'
+  const playerBlackjack = playerScore === 'Blackjack'
+  const dealerBlackjack = dealerScore === 'Blackjack'
+
+  if (playerBust) {
+    return 'lose'
+  }
+
+  if (dealerBust) {
+    return 'win'
+  }
+
+  if (playerBlackjack || dealerBlackjack) {
+    if (playerBlackjack && dealerBlackjack) {
+      return 'draw'
+    }
+
+    return playerBlackjack ? 'win' : 'lose'
+  }
+
+  const playerValue = numericPrefix(playerScore)
+  const dealerValue = numericPrefix(dealerScore)
+
+  if (playerValue === dealerValue) {
+    return 'draw'
+  }
+
+  return playerValue > dealerValue ? 'win' : 'lose'
+}
+
 function ExpectedResultsPage() {
   const [standThreshold, setStandThreshold] = useState<number>(17)
 
@@ -54,10 +90,6 @@ function ExpectedResultsPage() {
 
   const playerLabels = useMemo(() => sortScores([...playerScores.keys()]), [playerScores])
   const dealerLabels = useMemo(() => sortScores([...dealerScores.keys()]), [dealerScores])
-
-  const playerBust = playerScores.get('22+') ?? 0
-  const dealerBust = dealerScores.get('22+') ?? 0
-  const bustDelta = playerBust - dealerBust
 
   return (
     <main className="combination-page">
@@ -78,13 +110,6 @@ function ExpectedResultsPage() {
         />
       </section>
 
-      <section className="summary" aria-live="polite">
-        <p>Player threshold: {standThreshold}</p>
-        <p>Dealer threshold: 17</p>
-        <p>Player bust delta: {formatProbability(bustDelta)}</p>
-        <p>Matrix cells: {(playerLabels.length * dealerLabels.length).toLocaleString()}</p>
-      </section>
-
       <section className="combination-table expected-matrix-shell" aria-label="Expected results matrix">
         <div className="expected-matrix-scroll">
           <table className="expected-matrix-table">
@@ -96,6 +121,7 @@ function ExpectedResultsPage() {
                     {dealerScore}
                   </th>
                 ))}
+                <th scope="col">Total</th>
               </tr>
             </thead>
             <tbody>
@@ -108,12 +134,31 @@ function ExpectedResultsPage() {
                     {dealerLabels.map((dealerScore) => {
                       const dealerProbability = dealerScores.get(dealerScore) ?? 0
                       const product = playerProbability * dealerProbability
+                      const result = outcomeClass(playerScore, dealerScore)
 
-                      return <td key={`${playerScore}-${dealerScore}`}>{formatProbability(product)}</td>
+                      return (
+                        <td key={`${playerScore}-${dealerScore}`} className={`expected-cell ${result}`}>
+                          {formatProbability(product)}
+                        </td>
+                      )
                     })}
+                    <td className="expected-total-cell">{formatProbability(playerProbability)}</td>
                   </tr>
                 )
               })}
+              <tr>
+                <th scope="row">Total</th>
+                {dealerLabels.map((dealerScore) => {
+                  const dealerProbability = dealerScores.get(dealerScore) ?? 0
+
+                  return (
+                    <td key={`total-${dealerScore}`} className="expected-total-cell">
+                      {formatProbability(dealerProbability)}
+                    </td>
+                  )
+                })}
+                <td className="expected-total-cell">{formatProbability(1)}</td>
+              </tr>
             </tbody>
           </table>
         </div>

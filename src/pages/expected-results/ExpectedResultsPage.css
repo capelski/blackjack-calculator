@@ -20,6 +20,10 @@
   white-space: nowrap;
 }
 
+.expected-matrix-table td {
+  font-variant-numeric: tabular-nums;
+}
+
 .expected-matrix-table thead th {
   position: sticky;
   top: 0;
@@ -45,6 +49,27 @@
 
 .expected-matrix-table tbody tr:nth-child(even) {
   background: rgba(255, 255, 255, 0.35);
+}
+
+.expected-cell.win {
+  background: rgba(15, 125, 81, 0.18);
+  color: #095939;
+}
+
+.expected-cell.draw {
+  background: rgba(209, 176, 80, 0.25);
+  color: #7b5a05;
+}
+
+.expected-cell.lose {
+  background: rgba(214, 111, 72, 0.2);
+  color: #8e2f12;
+}
+
+.expected-total-cell {
+  background: rgba(34, 86, 65, 0.08);
+  color: var(--ink);
+  font-weight: 700;
 }
 
 @media (max-width: 760px) {
