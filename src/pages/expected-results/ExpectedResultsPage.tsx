@@ -78,6 +78,10 @@ function outcomeClass(playerScore: string, dealerScore: string): 'win' | 'draw' 
   return playerValue > dealerValue ? 'win' : 'lose'
 }
 
+function formatReturnPerUnit(value: number): string {
+  return `${value.toFixed(4)}x`
+}
+
 function ExpectedResultsPage() {
   const [standThreshold, setStandThreshold] = useState<number>(17)
 
@@ -94,6 +98,7 @@ function ExpectedResultsPage() {
   const outcomeTotals = useMemo(() => {
     const totals = {
       win: 0,
+      blackjackWin: 0,
       draw: 0,
       lose: 0,
     }
@@ -105,6 +110,11 @@ function ExpectedResultsPage() {
         const dealerProbability = dealerScores.get(dealerScore) ?? 0
         const product = playerProbability * dealerProbability
         const result = outcomeClass(playerScore, dealerScore)
+
+        if (result === 'win' && playerScore === 'Blackjack' && dealerScore !== 'Blackjack') {
+          totals.blackjackWin += product
+        }
+
         totals[result] += product
       }
     }
@@ -112,8 +122,11 @@ function ExpectedResultsPage() {
     return totals
   }, [dealerLabels, dealerScores, playerLabels, playerScores])
 
-  const playerRoi = outcomeTotals.win - outcomeTotals.lose
-  const playerRoiClass = playerRoi >= 0 ? 'roi-positive' : 'roi-negative'
+  const regularWinProbability = outcomeTotals.win - outcomeTotals.blackjackWin
+  const playerNetRoi =
+    regularWinProbability + outcomeTotals.blackjackWin * 1.5 - outcomeTotals.lose
+  const playerReturnPerUnit = 1 + playerNetRoi
+  const playerRoiClass = playerNetRoi >= 0 ? 'roi-positive' : 'roi-negative'
 
   return (
     <main className="combination-page">
@@ -149,7 +162,10 @@ function ExpectedResultsPage() {
         </article>
         <article className={`expected-summary-card roi ${playerRoiClass}`}>
           <h2>Player ROI</h2>
-          <p>{formatProbability(playerRoi)}</p>
+          <p>{formatReturnPerUnit(playerReturnPerUnit)}</p>
+          <span className="expected-summary-card-meta">
+            Net {formatProbability(playerNetRoi)} per unit
+          </span>
         </article>
       </section>
 

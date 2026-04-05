@@ -25,6 +25,15 @@
   font-variant-numeric: tabular-nums;
 }
 
+.expected-summary-card-meta {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  opacity: 0.85;
+  font-variant-numeric: tabular-nums;
+}
+
 .expected-summary-card.win {
   background: rgba(15, 125, 81, 0.12);
 }
