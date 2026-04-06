@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:bdd": "TS_NODE_PROJECT=tsconfig.cucumber.json cucumber-js src/pages/**/tests/cucumber/**/*.feature --loader ts-node/esm --import src/pages/**/tests/cucumber/**/*.ts",
+    "test:bdd": "TS_NODE_PROJECT=tsconfig.cucumber.json cucumber-js \"src/pages/**/*.feature\" --loader ts-node/esm --import \"src/pages/**/*steps.ts\"",
     "test": "npm run test:bdd"
   },
   "dependencies": {
