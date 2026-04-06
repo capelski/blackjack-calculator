@@ -72,6 +72,23 @@
   font-weight: 700;
 }
 
+.optimal-action-cell {
+  font-weight: 700;
+  text-align: center;
+  background: rgba(15, 125, 81, 0.08);
+}
+
+.optimal-action-cell.conflict {
+  background: rgba(214, 111, 72, 0.12);
+}
+
+.conflict-warning {
+  display: inline-block;
+  margin-left: 0.35rem;
+  font-size: 1.1em;
+  color: #c4651d;
+}
+
 @media (max-width: 760px) {
   .cascading-actions-table {
     min-width: 740px;

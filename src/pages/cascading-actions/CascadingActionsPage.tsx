@@ -33,6 +33,8 @@ type ScoreActionGroup = {
   score: number
   handType: 'Hard' | 'Soft'
   rows: ActionRow[]
+  optimalAction: 'Stand' | 'Hit'
+  conflictsWithThreshold: boolean
 }
 
 type HitTransition = {
@@ -150,6 +152,10 @@ function formatReturnPerUnit(value: number): string {
   return `${value.toFixed(4)}x`
 }
 
+function determineThresholdAction(score: number, threshold: number): 'Stand' | 'Hit' {
+  return score >= threshold ? 'Stand' : 'Hit'
+}
+
 function listScoreStates(): ScoreState[] {
   const states: ScoreState[] = []
 
@@ -177,6 +183,9 @@ function CascadingActionsPage() {
 
       const standReturnPerUnit = 1 + standOutcomes.win - standOutcomes.lose
       const hitReturnPerUnit = 1 + hitOutcomes.win - hitOutcomes.lose
+      const optimalAction: 'Stand' | 'Hit' = hitReturnPerUnit > standReturnPerUnit ? 'Hit' : 'Stand'
+      const thresholdAction = determineThresholdAction(state.score, standThreshold)
+      const conflictsWithThreshold = optimalAction !== thresholdAction
 
       return {
         id: `${state.handType}-${state.score}`,
@@ -194,6 +203,8 @@ function CascadingActionsPage() {
             returnPerUnit: hitReturnPerUnit,
           },
         ],
+        optimalAction,
+        conflictsWithThreshold,
       }
     })
   }, [dealerScores, standThreshold])
@@ -237,6 +248,7 @@ function CascadingActionsPage() {
               <tr>
                 <th scope="col">Score</th>
                 <th scope="col">Hand</th>
+                <th scope="col">Optimal action</th>
                 <th scope="col">Action</th>
                 <th scope="col">Win</th>
                 <th scope="col">Draw</th>
@@ -248,6 +260,10 @@ function CascadingActionsPage() {
               {scoreActionGroups.flatMap((group) => [
                 <tr key={`${group.id}-stand`}>
                   <th scope="row" rowSpan={2} className="state-cell score-cell">{group.score}</th>
+                  <td rowSpan={2} className={`optimal-action-cell ${group.conflictsWithThreshold ? 'conflict' : ''}`}>
+                    {group.optimalAction}
+                    {group.conflictsWithThreshold && <span className="conflict-warning" aria-label="Conflicts with threshold">⚠</span>}
+                  </td>
                   <th scope="row" rowSpan={2} className="state-cell hand-type-cell">{group.handType}</th>
                   <td className="action-cell stand">Stand</td>
                   <td>{formatProbability(group.rows[0].outcomes.win)}</td>
