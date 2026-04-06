@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import './CascadingActionsPage.css'
 import type { CombinationItem } from '../common/combinationsTreeLogic'
 import {
@@ -6,6 +6,7 @@ import {
   createTreeNavigator,
   formatProbability,
 } from '../common/combinationsTreeLogic'
+import StandThresholdSlider from '../common/components/StandThresholdSlider'
 import { compareFinalScores } from '../final-scores/finalScoresLogic'
 import { outcomeClass } from '../expected-results/expectedResultsLogic'
 
@@ -109,7 +110,11 @@ function computeHitTransition(state: ScoreState, cardValue: number): HitTransiti
   }
 }
 
-function computeHitOutcomes(state: ScoreState, dealerScores: Map<string, number>): OutcomeTotals {
+function computeHitOutcomesWithThreshold(
+  state: ScoreState,
+  dealerScores: Map<string, number>,
+  threshold: number,
+): OutcomeTotals {
   const totals: OutcomeTotals = { win: 0, draw: 0, lose: 0 }
 
   for (const draw of DRAW_OPTIONS) {
@@ -120,10 +125,22 @@ function computeHitOutcomes(state: ScoreState, dealerScores: Map<string, number>
       continue
     }
 
-    const standOutcomes = computeStandOutcomes(`${transition.total}`, dealerScores)
-    totals.win += standOutcomes.win * draw.probability
-    totals.draw += standOutcomes.draw * draw.probability
-    totals.lose += standOutcomes.lose * draw.probability
+    if (transition.total >= threshold) {
+      const standOutcomes = computeStandOutcomes(`${transition.total}`, dealerScores)
+      totals.win += standOutcomes.win * draw.probability
+      totals.draw += standOutcomes.draw * draw.probability
+      totals.lose += standOutcomes.lose * draw.probability
+    } else {
+      const nextState: ScoreState = {
+        score: transition.total,
+        handType: transition.isSoft ? 'Soft' : 'Hard',
+        isSoft: transition.isSoft,
+      }
+      const nextOutcomes = computeHitOutcomesWithThreshold(nextState, dealerScores, threshold)
+      totals.win += nextOutcomes.win * draw.probability
+      totals.draw += nextOutcomes.draw * draw.probability
+      totals.lose += nextOutcomes.lose * draw.probability
+    }
   }
 
   return totals
@@ -148,6 +165,7 @@ function listScoreStates(): ScoreState[] {
 }
 
 function CascadingActionsPage() {
+  const [standThreshold, setStandThreshold] = useState<number>(17)
   const dealerScores = useMemo(() => groupScores(collectFinalCombinations(17)), [])
 
   const scoreActionGroups = useMemo<ScoreActionGroup[]>(() => {
@@ -155,7 +173,7 @@ function CascadingActionsPage() {
 
     return states.map((state) => {
       const standOutcomes = computeStandOutcomes(`${state.score}`, dealerScores)
-      const hitOutcomes = computeHitOutcomes(state, dealerScores)
+      const hitOutcomes = computeHitOutcomesWithThreshold(state, dealerScores, standThreshold)
 
       const standReturnPerUnit = 1 + standOutcomes.win - standOutcomes.lose
       const hitReturnPerUnit = 1 + hitOutcomes.win - hitOutcomes.lose
@@ -178,7 +196,7 @@ function CascadingActionsPage() {
         ],
       }
     })
-  }, [dealerScores])
+  }, [dealerScores, standThreshold])
 
   const dealerLabels = useMemo(
     () => [...dealerScores.keys()].sort((left, right) => compareFinalScores(
@@ -198,6 +216,14 @@ function CascadingActionsPage() {
           hitting exactly one card and then standing. Hard and soft scores are shown separately.
         </p>
       </header>
+
+      <section className="controls" aria-label="Cascading actions controls">
+        <StandThresholdSlider
+          value={standThreshold}
+          inputId="cascading-actions-threshold"
+          onChange={setStandThreshold}
+        />
+      </section>
 
       <section className="summary" aria-live="polite">
         <p>Dealer policy: stands on 17</p>
