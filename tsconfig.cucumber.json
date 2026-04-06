@@ -12,8 +12,6 @@
     "types": ["node", "@cucumber/cucumber"]
   },
   "include": [
-    "src/pages/common/combinationsTreeLogic.ts",
-    "src/pages/final-scores/finalScoresLogic.ts",
-    "tests/cucumber/**/*.ts"
+    "src/pages/**/*.ts"
   ]
 }

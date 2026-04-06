@@ -7,7 +7,7 @@ import {
   type Outcome,
   type OutcomeTotals,
   outcomeClass,
-} from '../../../src/pages/expected-results/expectedResultsLogic.ts'
+} from '../../expectedResultsLogic.ts'
 
 type ExpectedResultsWorldState = {
   playerScores: Map<string, number>

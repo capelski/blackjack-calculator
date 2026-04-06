@@ -5,7 +5,7 @@ import {
   compareFinalScores,
   normalizedFinalScore,
   type FinalScoreGroup,
-} from '../../../src/pages/final-scores/finalScoresLogic.ts'
+} from '../../finalScoresLogic.ts'
 
 type FinalScoresWorldState = {
   normalizedScore: string | null
