@@ -32,6 +32,7 @@ type ScoreActionGroup = {
   id: string
   score: number
   handType: 'Hard' | 'Soft'
+  scoreLabel: string
   rows: ActionRow[]
   optimalAction: 'Stand' | 'Hit'
   conflictsWithThreshold: boolean
@@ -156,6 +157,10 @@ function determineThresholdAction(score: number, threshold: number): 'Stand' | '
   return score >= threshold ? 'Stand' : 'Hit'
 }
 
+function formatScoreLabel(score: number, handType: 'Hard' | 'Soft'): string {
+  return handType === 'Soft' ? `${score} (soft)` : `${score}`
+}
+
 function listScoreStates(): ScoreState[] {
   const states: ScoreState[] = []
 
@@ -167,7 +172,13 @@ function listScoreStates(): ScoreState[] {
     }
   }
 
-  return states
+  return states.sort((left, right) => {
+    if (left.handType !== right.handType) {
+      return left.handType === 'Hard' ? -1 : 1
+    }
+
+    return left.score - right.score
+  })
 }
 
 function CascadingActionsPage() {
@@ -191,6 +202,7 @@ function CascadingActionsPage() {
         id: `${state.handType}-${state.score}`,
         score: state.score,
         handType: state.handType,
+        scoreLabel: formatScoreLabel(state.score, state.handType),
         rows: [
           {
             action: 'Stand',
@@ -247,29 +259,27 @@ function CascadingActionsPage() {
             <thead>
               <tr>
                 <th scope="col">Score</th>
-                <th scope="col">Hand</th>
-                <th scope="col">Optimal action</th>
                 <th scope="col">Action</th>
                 <th scope="col">Win</th>
                 <th scope="col">Draw</th>
                 <th scope="col">Lose</th>
                 <th scope="col">Return / unit</th>
+                <th scope="col">Optimal action</th>
               </tr>
             </thead>
             <tbody>
               {scoreActionGroups.flatMap((group) => [
                 <tr key={`${group.id}-stand`}>
-                  <th scope="row" rowSpan={2} className="state-cell score-cell">{group.score}</th>
-                  <td rowSpan={2} className={`optimal-action-cell ${group.conflictsWithThreshold ? 'conflict' : ''}`}>
-                    {group.optimalAction}
-                    {group.conflictsWithThreshold && <span className="conflict-warning" aria-label="Conflicts with threshold">⚠</span>}
-                  </td>
-                  <th scope="row" rowSpan={2} className="state-cell hand-type-cell">{group.handType}</th>
+                  <th scope="row" rowSpan={2} className="state-cell score-cell">{group.scoreLabel}</th>
                   <td className="action-cell stand">Stand</td>
                   <td>{formatProbability(group.rows[0].outcomes.win)}</td>
                   <td>{formatProbability(group.rows[0].outcomes.draw)}</td>
                   <td>{formatProbability(group.rows[0].outcomes.lose)}</td>
                   <td className="roi-cell">{formatReturnPerUnit(group.rows[0].returnPerUnit)}</td>
+                  <td rowSpan={2} className={`optimal-action-cell ${group.conflictsWithThreshold ? 'conflict' : ''}`}>
+                    {group.optimalAction}
+                    {group.conflictsWithThreshold && <span className="conflict-warning" aria-label="Conflicts with threshold">⚠</span>}
+                  </td>
                 </tr>,
                 <tr key={`${group.id}-hit`}>
                   <td className="action-cell hit">Hit</td>
