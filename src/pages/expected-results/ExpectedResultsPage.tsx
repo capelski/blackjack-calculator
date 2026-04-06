@@ -10,8 +10,12 @@ import StandThresholdSlider from '../common/components/StandThresholdSlider'
 import {
   compareFinalScores,
   normalizedFinalScore,
-  numericPrefix,
 } from '../final-scores/finalScoresLogic'
+import {
+  calculateOutcomeTotals,
+  calculatePlayerRoi,
+  outcomeClass,
+} from './expectedResultsLogic'
 
 function collectFinalCombinations(standThreshold: number): CombinationItem[] {
   const treeNavigator = createTreeNavigator(standThreshold, [])
@@ -46,38 +50,6 @@ function sortScores(scores: string[]): string[] {
   )
 }
 
-function outcomeClass(playerScore: string, dealerScore: string): 'win' | 'draw' | 'lose' {
-  const playerBust = playerScore === '22+'
-  const dealerBust = dealerScore === '22+'
-  const playerBlackjack = playerScore === 'Blackjack'
-  const dealerBlackjack = dealerScore === 'Blackjack'
-
-  if (playerBust) {
-    return 'lose'
-  }
-
-  if (dealerBust) {
-    return 'win'
-  }
-
-  if (playerBlackjack || dealerBlackjack) {
-    if (playerBlackjack && dealerBlackjack) {
-      return 'draw'
-    }
-
-    return playerBlackjack ? 'win' : 'lose'
-  }
-
-  const playerValue = numericPrefix(playerScore)
-  const dealerValue = numericPrefix(dealerScore)
-
-  if (playerValue === dealerValue) {
-    return 'draw'
-  }
-
-  return playerValue > dealerValue ? 'win' : 'lose'
-}
-
 function formatReturnPerUnit(value: number): string {
   return `${value.toFixed(4)}x`
 }
@@ -95,37 +67,13 @@ function ExpectedResultsPage() {
   const playerLabels = useMemo(() => sortScores([...playerScores.keys()]), [playerScores])
   const dealerLabels = useMemo(() => sortScores([...dealerScores.keys()]), [dealerScores])
 
-  const outcomeTotals = useMemo(() => {
-    const totals = {
-      win: 0,
-      blackjackWin: 0,
-      draw: 0,
-      lose: 0,
-    }
-
-    for (const playerScore of playerLabels) {
-      const playerProbability = playerScores.get(playerScore) ?? 0
-
-      for (const dealerScore of dealerLabels) {
-        const dealerProbability = dealerScores.get(dealerScore) ?? 0
-        const product = playerProbability * dealerProbability
-        const result = outcomeClass(playerScore, dealerScore)
-
-        if (result === 'win' && playerScore === 'Blackjack' && dealerScore !== 'Blackjack') {
-          totals.blackjackWin += product
-        }
-
-        totals[result] += product
-      }
-    }
-
-    return totals
-  }, [dealerLabels, dealerScores, playerLabels, playerScores])
-
-  const regularWinProbability = outcomeTotals.win - outcomeTotals.blackjackWin
-  const playerNetRoi =
-    regularWinProbability + outcomeTotals.blackjackWin * 1.5 - outcomeTotals.lose
-  const playerReturnPerUnit = 1 + playerNetRoi
+  const outcomeTotals = useMemo(
+    () => calculateOutcomeTotals(playerScores, dealerScores, playerLabels, dealerLabels),
+    [dealerLabels, dealerScores, playerLabels, playerScores],
+  )
+  const playerRoi = useMemo(() => calculatePlayerRoi(outcomeTotals), [outcomeTotals])
+  const playerNetRoi = playerRoi.netRoi
+  const playerReturnPerUnit = playerRoi.returnPerUnit
   const playerRoiClass = playerNetRoi >= 0 ? 'roi-positive' : 'roi-negative'
 
   return (
