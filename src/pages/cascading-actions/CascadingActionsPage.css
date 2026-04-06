@@ -1,0 +1,79 @@
+.cascading-actions-shell {
+  padding: 0;
+}
+
+.cascading-actions-scroll {
+  overflow: auto;
+}
+
+.cascading-actions-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+.cascading-actions-table th,
+.cascading-actions-table td {
+  border: 1px solid rgba(216, 196, 170, 0.7);
+  padding: 0.48rem 0.62rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.cascading-actions-table td {
+  font-variant-numeric: tabular-nums;
+}
+
+.cascading-actions-table thead th {
+  position: sticky;
+  top: 0;
+  background: rgba(15, 125, 81, 0.12);
+  color: var(--accent-strong);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.76rem;
+}
+
+.cascading-actions-table th:first-child,
+.cascading-actions-table th:nth-child(2) {
+  text-align: left;
+}
+
+.state-cell {
+  background: rgba(255, 255, 255, 0.94);
+  vertical-align: middle;
+}
+
+.score-cell {
+  font-weight: 700;
+}
+
+.hand-type-cell {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.action-cell {
+  text-align: left;
+  font-weight: 700;
+}
+
+.action-cell.stand {
+  color: #095939;
+  background: rgba(15, 125, 81, 0.16);
+}
+
+.action-cell.hit {
+  color: #7b5a05;
+  background: rgba(209, 176, 80, 0.21);
+}
+
+.roi-cell {
+  font-weight: 700;
+}
+
+@media (max-width: 760px) {
+  .cascading-actions-table {
+    min-width: 740px;
+  }
+}

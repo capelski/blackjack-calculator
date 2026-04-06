@@ -3,6 +3,7 @@ import './App.css'
 import CombinationsTreePage from './pages/combinations-tree/CombinationsTreePage'
 import FinalScoresPage from './pages/final-scores/FinalScoresPage'
 import ExpectedResultsPage from './pages/expected-results/ExpectedResultsPage'
+import CascadingActionsPage from './pages/cascading-actions/CascadingActionsPage'
 
 function App() {
   return (
@@ -26,6 +27,12 @@ function App() {
         >
           Expected results
         </NavLink>
+        <NavLink
+          to="/cascading-actions"
+          className={({ isActive }) => (isActive ? 'app-link active' : 'app-link')}
+        >
+          Cascading actions
+        </NavLink>
       </nav>
 
       <Routes>
@@ -33,6 +40,7 @@ function App() {
         <Route path="/combinations-tree" element={<CombinationsTreePage />} />
         <Route path="/final-scores" element={<FinalScoresPage />} />
         <Route path="/expected-results" element={<ExpectedResultsPage />} />
+        <Route path="/cascading-actions" element={<CascadingActionsPage />} />
         <Route path="*" element={<Navigate to="/combinations-tree" replace />} />
       </Routes>
     </div>
