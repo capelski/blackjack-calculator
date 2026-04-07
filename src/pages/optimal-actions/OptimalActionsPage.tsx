@@ -1,26 +1,18 @@
 import { useMemo, useState } from 'react'
 import './OptimalActionsPage.css'
-import type { CombinationItem } from '../common/combinationsTreeLogic'
-import {
-  PAGE_SIZE,
-  createTreeNavigator,
-  formatProbability,
-} from '../common/combinationsTreeLogic'
+import { formatProbability } from '../common/combinationsTreeLogic'
 import StandThresholdSlider from '../common/components/StandThresholdSlider'
 import { compareFinalScores } from '../final-scores/finalScoresLogic'
-import { outcomeClass } from '../expected-results/expectedResultsLogic'
-
-type ScoreState = {
-  score: number
-  handType: 'Hard' | 'Soft'
-  isSoft: boolean
-}
-
-type OutcomeTotals = {
-  win: number
-  draw: number
-  lose: number
-}
+import {
+  collectFinalCombinations,
+  computeHitOutcomesWithThreshold,
+  computeStandOutcomes,
+  determineThresholdAction,
+  formatScoreLabel,
+  groupScores,
+  listScoreStates,
+  type OutcomeTotals,
+} from './optimalActionsLogic'
 
 type ActionRow = {
   action: 'Stand' | 'Hit'
@@ -38,147 +30,8 @@ type ScoreActionGroup = {
   conflictsWithThreshold: boolean
 }
 
-type HitTransition = {
-  total: number
-  isSoft: boolean
-  bust: boolean
-}
-
-const DRAW_OPTIONS: Array<{ cardValue: number; probability: number }> = [
-  { cardValue: 11, probability: 1 / 13 },
-  { cardValue: 2, probability: 1 / 13 },
-  { cardValue: 3, probability: 1 / 13 },
-  { cardValue: 4, probability: 1 / 13 },
-  { cardValue: 5, probability: 1 / 13 },
-  { cardValue: 6, probability: 1 / 13 },
-  { cardValue: 7, probability: 1 / 13 },
-  { cardValue: 8, probability: 1 / 13 },
-  { cardValue: 9, probability: 1 / 13 },
-  { cardValue: 10, probability: 4 / 13 },
-]
-
-function collectFinalCombinations(standThreshold: number): CombinationItem[] {
-  const treeNavigator = createTreeNavigator(standThreshold, [])
-  const total = treeNavigator.getTotalCombinations(true)
-  const pages = Math.ceil(total / PAGE_SIZE)
-  const items: CombinationItem[] = []
-
-  for (let page = 0; page < pages; page += 1) {
-    items.push(...treeNavigator.getPage(page, PAGE_SIZE, true))
-  }
-
-  return items
-}
-
-function groupScores(combinations: CombinationItem[]): Map<string, number> {
-  const grouped = new Map<string, number>()
-
-  for (const combination of combinations) {
-    const score = combination.score.includes('(')
-      ? combination.score.slice(0, combination.score.indexOf(' ('))
-      : combination.score.startsWith('22')
-        ? '22+'
-        : combination.score
-
-    grouped.set(score, (grouped.get(score) ?? 0) + combination.probability)
-  }
-
-  return grouped
-}
-
-function computeStandOutcomes(playerScore: string, dealerScores: Map<string, number>): OutcomeTotals {
-  const totals: OutcomeTotals = { win: 0, draw: 0, lose: 0 }
-
-  for (const [dealerScore, dealerProbability] of dealerScores.entries()) {
-    const result = outcomeClass(playerScore, dealerScore)
-    totals[result] += dealerProbability
-  }
-
-  return totals
-}
-
-function computeHitTransition(state: ScoreState, cardValue: number): HitTransition {
-  let total = state.score + cardValue
-  let isSoft = state.isSoft || cardValue === 11
-
-  if (isSoft && total > 21) {
-    total -= 10
-    isSoft = false
-  }
-
-  return {
-    total,
-    isSoft,
-    bust: total > 21,
-  }
-}
-
-function computeHitOutcomesWithThreshold(
-  state: ScoreState,
-  dealerScores: Map<string, number>,
-  threshold: number,
-): OutcomeTotals {
-  const totals: OutcomeTotals = { win: 0, draw: 0, lose: 0 }
-
-  for (const draw of DRAW_OPTIONS) {
-    const transition = computeHitTransition(state, draw.cardValue)
-
-    if (transition.bust) {
-      totals.lose += draw.probability
-      continue
-    }
-
-    if (transition.total >= threshold) {
-      const standOutcomes = computeStandOutcomes(`${transition.total}`, dealerScores)
-      totals.win += standOutcomes.win * draw.probability
-      totals.draw += standOutcomes.draw * draw.probability
-      totals.lose += standOutcomes.lose * draw.probability
-    } else {
-      const nextState: ScoreState = {
-        score: transition.total,
-        handType: transition.isSoft ? 'Soft' : 'Hard',
-        isSoft: transition.isSoft,
-      }
-      const nextOutcomes = computeHitOutcomesWithThreshold(nextState, dealerScores, threshold)
-      totals.win += nextOutcomes.win * draw.probability
-      totals.draw += nextOutcomes.draw * draw.probability
-      totals.lose += nextOutcomes.lose * draw.probability
-    }
-  }
-
-  return totals
-}
-
 function formatReturnPerUnit(value: number): string {
   return `${value.toFixed(4)}x`
-}
-
-function determineThresholdAction(score: number, threshold: number): 'Stand' | 'Hit' {
-  return score >= threshold ? 'Stand' : 'Hit'
-}
-
-function formatScoreLabel(score: number, handType: 'Hard' | 'Soft'): string {
-  return handType === 'Soft' ? `${score} (soft)` : `${score}`
-}
-
-function listScoreStates(): ScoreState[] {
-  const states: ScoreState[] = []
-
-  for (let score = 21; score >= 4; score -= 1) {
-    states.push({ score, handType: 'Hard', isSoft: false })
-
-    if (score >= 12) {
-      states.push({ score, handType: 'Soft', isSoft: true })
-    }
-  }
-
-  return states.sort((left, right) => {
-    if (left.handType !== right.handType) {
-      return left.handType === 'Hard' ? -1 : 1
-    }
-
-    return left.score - right.score
-  })
 }
 
 function OptimalActionsPage() {
