@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import './CascadingActionsPage.css'
+import './OptimalActionsPage.css'
 import type { CombinationItem } from '../common/combinationsTreeLogic'
 import {
   PAGE_SIZE,
@@ -181,7 +181,7 @@ function listScoreStates(): ScoreState[] {
   })
 }
 
-function CascadingActionsPage() {
+function OptimalActionsPage() {
   const [standThreshold, setStandThreshold] = useState<number>(17)
   const dealerScores = useMemo(() => groupScores(collectFinalCombinations(17)), [])
 
@@ -233,17 +233,17 @@ function CascadingActionsPage() {
     <main className="combination-page">
       <header className="combination-header">
         <p className="eyebrow">Blackjack Analyzer</p>
-        <h1>Cascading Actions</h1>
+        <h1>Optimal Actions</h1>
         <p className="intro">
           For each player score, compare expected outcomes for standing now versus
           hitting exactly one card and then standing. Hard and soft scores are shown separately.
         </p>
       </header>
 
-      <section className="controls" aria-label="Cascading actions controls">
+      <section className="controls" aria-label="Optimal actions controls">
         <StandThresholdSlider
           value={standThreshold}
-          inputId="cascading-actions-threshold"
+          inputId="optimal-actions-threshold"
           onChange={setStandThreshold}
         />
       </section>
@@ -253,9 +253,9 @@ function CascadingActionsPage() {
         <p>Dealer final scores: {dealerLabels.join(', ')}</p>
       </section>
 
-      <section className="combination-table cascading-actions-shell" aria-label="Cascading actions table">
-        <div className="cascading-actions-scroll">
-          <table className="cascading-actions-table">
+      <section className="combination-table optimal-actions-shell" aria-label="Optimal actions table">
+        <div className="optimal-actions-scroll">
+          <table className="optimal-actions-table">
             <thead>
               <tr>
                 <th scope="col">Score</th>
@@ -297,4 +297,4 @@ function CascadingActionsPage() {
   )
 }
 
-export default CascadingActionsPage
+export default OptimalActionsPage
