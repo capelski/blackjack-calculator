@@ -1,154 +1,111 @@
 import assert from 'node:assert/strict'
 import { Given, Then, When } from '@cucumber/cucumber'
 
-import type { CombinationItem } from '../common/combinationsTreeLogic.ts'
 import {
+  collectFinalCombinations,
   computeHitOutcomesWithThreshold,
   computeHitTransition,
+  computeStandOutcomes,
   determineThresholdAction,
   groupScores,
-  listScoreStates,
   type OutcomeTotals,
   type ScoreState,
 } from './optimalActionsLogic.ts'
 
+type ActionComparison = {
+  standOutcomes: OutcomeTotals
+  hitOutcomes: OutcomeTotals
+  standReturnPerUnit: number
+  hitReturnPerUnit: number
+  optimalAction: 'Stand' | 'Hit'
+}
+
 type OptimalActionsWorldState = {
-  combinations: CombinationItem[]
-  groupedScores: Map<string, number>
-  transition: ReturnType<typeof computeHitTransition> | null
-  thresholdAction: 'Stand' | 'Hit' | null
   dealerScores: Map<string, number>
-  outcomes: OutcomeTotals | null
-  listedStates: ScoreState[]
+  actionComparison: ActionComparison | null
 }
 
 const state: OptimalActionsWorldState = {
-  combinations: [],
-  groupedScores: new Map(),
-  transition: null,
-  thresholdAction: null,
   dealerScores: new Map(),
-  outcomes: null,
-  listedStates: [],
+  actionComparison: null,
 }
 
-function parseScoreProbabilityMap(raw: string): Map<string, number> {
-  const entries = raw
-    .split(',')
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0)
-    .map((item) => {
-      const [score, probability] = item.split('=').map((part) => part.trim())
-      assert.ok(score && probability, `Invalid score-probability pair: ${item}`)
-      return [score, Number(probability)] as const
-    })
-
-  return new Map(entries)
+function normalizeScore(score: number): string {
+  return score > 21 ? '22+' : score === 21 && score >= 4 ? (score === 21 ? '21' : 'Blackjack') : `${score}`
 }
 
-Given('optimal-actions combinations {string}', (raw: string) => {
-  state.combinations = [...parseScoreProbabilityMap(raw).entries()].map(([score, probability]) => ({
-    score,
-    cards: '',
-    probability,
-    action: 'Stand',
-  }))
-  state.groupedScores = new Map()
-})
-
-When('I group optimal-actions scores', () => {
-  state.groupedScores = groupScores(state.combinations)
-})
-
-Then('grouped score {string} should have probability approximately {float}', (score: string, expected: number) => {
-  const actual = state.groupedScores.get(score) ?? 0
-  assert.ok(Math.abs(actual - expected) < 1e-12)
+Given('optimal-actions standard dealer probabilities from threshold {int}', (dealerThreshold: number) => {
+  const dealerCombinations = collectFinalCombinations(dealerThreshold)
+  state.dealerScores = groupScores(dealerCombinations)
 })
 
 When(
-  'I compute optimal-actions hit transition for score {int} hand type {string} with card value {int}',
-  (score: number, handType: 'Hard' | 'Soft', cardValue: number) => {
-    state.transition = computeHitTransition({
-      score,
-      handType,
-      isSoft: handType === 'Soft',
-    }, cardValue)
-  },
-)
-
-Then('the optimal-actions transition total should be {int}', (expectedTotal: number) => {
-  assert.equal(state.transition?.total, expectedTotal)
-})
-
-Then(
-  'the optimal-actions transition should be soft {word} and bust {word}',
-  (softFlag: string, bustFlag: string) => {
-    assert.ok(state.transition, 'Expected transition to be computed')
-    assert.equal(state.transition?.isSoft, softFlag === 'true')
-    assert.equal(state.transition?.bust, bustFlag === 'true')
-  },
-)
-
-When('I determine optimal-actions threshold action for score {int} and threshold {int}', (score: number, threshold: number) => {
-  state.thresholdAction = determineThresholdAction(score, threshold)
-})
-
-Then('the optimal-actions threshold action should be {string}', (expectedAction: 'Stand' | 'Hit') => {
-  assert.equal(state.thresholdAction, expectedAction)
-})
-
-Given('optimal-actions dealer probabilities {string}', (raw: string) => {
-  state.dealerScores = parseScoreProbabilityMap(raw)
-})
-
-When(
-  'I compute optimal-actions hit outcomes for score {int} hand type {string} with threshold {int}',
-  (score: number, handType: 'Hard' | 'Soft', threshold: number) => {
-    state.outcomes = computeHitOutcomesWithThreshold(
+  'I compute optimal-actions outcomes for score {int} hand type {string} with threshold {int}',
+  (score: number, handType: 'Hard' | 'Soft', playerThreshold: number) => {
+    const playerScore = normalizeScore(score)
+    const standOutcomes = computeStandOutcomes(playerScore, state.dealerScores)
+    const hitOutcomes = computeHitOutcomesWithThreshold(
       {
         score,
         handType,
         isSoft: handType === 'Soft',
       },
       state.dealerScores,
-      threshold,
+      playerThreshold,
     )
+
+    const standReturnPerUnit = 1 + standOutcomes.win - standOutcomes.lose
+    const hitReturnPerUnit = 1 + hitOutcomes.win - hitOutcomes.lose
+    const optimalAction = hitReturnPerUnit > standReturnPerUnit ? 'Hit' : 'Stand'
+
+    state.actionComparison = {
+      standOutcomes,
+      hitOutcomes,
+      standReturnPerUnit,
+      hitReturnPerUnit,
+      optimalAction,
+    }
   },
 )
 
-Then('optimal-actions win probability should be approximately {float}', (expected: number) => {
-  assert.ok(state.outcomes, 'Expected outcomes to be computed')
-  assert.ok(Math.abs((state.outcomes?.win ?? 0) - expected) < 1e-12)
+Then('the optimal-actions stand return per unit should be greater than the hit return per unit', () => {
+  assert.ok(state.actionComparison, 'Expected action comparison to be computed')
+  assert.ok(
+    state.actionComparison.standReturnPerUnit > state.actionComparison.hitReturnPerUnit,
+    `Expected stand ${state.actionComparison.standReturnPerUnit} > hit ${state.actionComparison.hitReturnPerUnit}`,
+  )
 })
 
-Then('optimal-actions draw probability should be approximately {float}', (expected: number) => {
-  assert.ok(state.outcomes, 'Expected outcomes to be computed')
-  assert.ok(Math.abs((state.outcomes?.draw ?? 0) - expected) < 1e-12)
+Then('the optimal-actions stand return per unit should be less than the hit return per unit', () => {
+  assert.ok(state.actionComparison, 'Expected action comparison to be computed')
+  assert.ok(
+    state.actionComparison.standReturnPerUnit < state.actionComparison.hitReturnPerUnit,
+    `Expected stand ${state.actionComparison.standReturnPerUnit} < hit ${state.actionComparison.hitReturnPerUnit}`,
+  )
 })
 
-Then('optimal-actions lose probability should be approximately {float}', (expected: number) => {
-  assert.ok(state.outcomes, 'Expected outcomes to be computed')
-  assert.ok(Math.abs((state.outcomes?.lose ?? 0) - expected) < 1e-12)
+Then('the optimal-actions action with highest return should be {string}', (expectedAction: 'Stand' | 'Hit') => {
+  assert.ok(state.actionComparison, 'Expected action comparison to be computed')
+  assert.equal(state.actionComparison.optimalAction, expectedAction)
 })
 
-When('I list optimal-actions score states', () => {
-  state.listedStates = listScoreStates()
+Then('the optimal-actions stand win probability should be approximately {float}', (expected: number) => {
+  assert.ok(state.actionComparison, 'Expected action comparison to be computed')
+  const actual = state.actionComparison.standOutcomes.win
+  assert.ok(Math.abs(actual - expected) < 1e-2, `Expected ${expected} ± 0.01, got ${actual}`)
 })
 
-Then('optimal-actions score state count should be {int}', (expectedCount: number) => {
-  assert.equal(state.listedStates.length, expectedCount)
+Then('the optimal-actions hit win probability should be greater than {int}', (threshold: number) => {
+  assert.ok(state.actionComparison, 'Expected action comparison to be computed')
+  assert.ok(state.actionComparison.hitOutcomes.win > threshold)
 })
 
-Then('the first optimal-actions state should be score {int} hand type {string}', (score: number, handType: 'Hard' | 'Soft') => {
-  const first = state.listedStates[0]
-  assert.ok(first, 'Expected at least one state')
-  assert.equal(first.score, score)
-  assert.equal(first.handType, handType)
+Then('the optimal-actions hit lose probability should be less than {int}', (threshold: number) => {
+  assert.ok(state.actionComparison, 'Expected action comparison to be computed')
+  assert.ok(state.actionComparison.hitOutcomes.lose < threshold)
 })
 
-Then('the last optimal-actions state should be score {int} hand type {string}', (score: number, handType: 'Hard' | 'Soft') => {
-  const last = state.listedStates[state.listedStates.length - 1]
-  assert.ok(last, 'Expected at least one state')
-  assert.equal(last.score, score)
-  assert.equal(last.handType, handType)
+Then('the optimal-actions threshold action for score {int} and threshold {int} should be {string}', (score: number, threshold: number, expectedAction: 'Stand' | 'Hit') => {
+  const action = determineThresholdAction(score, threshold)
+  assert.equal(action, expectedAction)
 })

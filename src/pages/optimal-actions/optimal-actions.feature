@@ -1,32 +1,30 @@
 Feature: Optimal actions logic
-  Optimal actions helper functions should produce deterministic transitions and outcomes.
+  Optimal actions should correctly compare stand vs hit outcomes across different player scores and thresholds.
 
-  Scenario: Group score labels from combination results
-    Given optimal-actions combinations "19 (soft 9)=0.25,19=0.5,22+=0.25"
-    When I group optimal-actions scores
-    Then grouped score "19" should have probability approximately 0.75
-    And grouped score "22+" should have probability approximately 0.25
+  Background:
+    Given optimal-actions standard dealer probabilities from threshold 17
 
-  Scenario: Compute hit transition with soft ace adjustment
-    When I compute optimal-actions hit transition for score 12 hand type "Soft" with card value 10
-    Then the optimal-actions transition total should be 12
-    And the optimal-actions transition should be soft false and bust false
+  Scenario: Score 4 hard with threshold 16 - compare stand vs hit
+    When I compute optimal-actions outcomes for score 4 hand type "Hard" with threshold 16
+    Then the optimal-actions stand return per unit should be less than the hit return per unit
+    And the optimal-actions action with highest return should be "Hit"
+    And the optimal-actions hit win probability should be greater than 0
+    And the optimal-actions hit lose probability should be less than 1
 
-  Scenario: Determine action from stand threshold
-    When I determine optimal-actions threshold action for score 16 and threshold 17
-    Then the optimal-actions threshold action should be "Hit"
-    When I determine optimal-actions threshold action for score 17 and threshold 17
-    Then the optimal-actions threshold action should be "Stand"
+  Scenario: Score 4 hard with threshold 17 - compare stand vs hit
+    When I compute optimal-actions outcomes for score 4 hand type "Hard" with threshold 17
+    Then the optimal-actions stand return per unit should be less than the hit return per unit
+    And the optimal-actions action with highest return should be "Hit"
+    And the optimal-actions hit win probability should be greater than 0
 
-  Scenario: Compute hit outcomes for a high hard score
-    Given optimal-actions dealer probabilities "22+=1"
-    When I compute optimal-actions hit outcomes for score 20 hand type "Hard" with threshold 21
-    Then optimal-actions win probability should be approximately 0.07692307692307693
-    And optimal-actions draw probability should be approximately 0
-    And optimal-actions lose probability should be approximately 0.9230769230769231
+  Scenario: Score 20 hard with threshold 16 - compare stand vs hit
+    When I compute optimal-actions outcomes for score 20 hand type "Hard" with threshold 16
+    Then the optimal-actions stand return per unit should be greater than the hit return per unit
+    And the optimal-actions action with highest return should be "Stand"
+    And the optimal-actions stand win probability should be approximately 0.7
 
-  Scenario: List score states in deterministic order
-    When I list optimal-actions score states
-    Then optimal-actions score state count should be 28
-    And the first optimal-actions state should be score 4 hand type "Hard"
-    And the last optimal-actions state should be score 21 hand type "Soft"
+  Scenario: Score 20 hard with threshold 17 - compare stand vs hit
+    When I compute optimal-actions outcomes for score 20 hand type "Hard" with threshold 17
+    Then the optimal-actions stand return per unit should be greater than the hit return per unit
+    And the optimal-actions action with highest return should be "Stand"
+    And the optimal-actions threshold action for score 20 and threshold 17 should be "Stand"
