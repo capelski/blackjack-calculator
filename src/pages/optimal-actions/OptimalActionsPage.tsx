@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import './OptimalActionsPage.css'
 import { formatProbability } from '../common/combinationsTreeLogic'
-import StandThresholdSlider from '../common/components/StandThresholdSlider'
 import { compareFinalScores } from '../final-scores/finalScoresLogic'
+import { useStandThreshold } from '../stand-threshold/standThresholdContext'
 import {
   collectFinalCombinations,
   computeHitOutcomesWithThreshold,
@@ -35,7 +35,7 @@ function formatReturnPerUnit(value: number): string {
 }
 
 function OptimalActionsPage() {
-  const [standThreshold, setStandThreshold] = useState<number>(17)
+  const standThreshold = useStandThreshold()
   const dealerScores = useMemo(() => groupScores(collectFinalCombinations(17)), [])
 
   const scoreActionGroups = useMemo<ScoreActionGroup[]>(() => {
@@ -92,15 +92,6 @@ function OptimalActionsPage() {
           hitting exactly one card and then standing. Hard and soft scores are shown separately.
         </p>
       </header>
-
-      <section className="controls" aria-label="Optimal actions controls">
-        <StandThresholdSlider
-          value={standThreshold}
-          inputId="optimal-actions-threshold"
-          onChange={setStandThreshold}
-        />
-      </section>
-
       <section className="summary" aria-live="polite">
         <p>Dealer policy: stands on 17</p>
         <p>Dealer final scores: {dealerLabels.join(', ')}</p>

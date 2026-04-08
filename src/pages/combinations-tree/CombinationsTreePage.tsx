@@ -4,6 +4,7 @@ import CombinationsControls from './components/CombinationsControls'
 import CombinationsPagination from './components/CombinationsPagination'
 import CombinationsSummary from './components/CombinationsSummary'
 import HandOutcomesTable from '../common/components/HandOutcomesTable'
+import { useStandThreshold } from '../stand-threshold/standThresholdContext'
 import {
   PAGE_SIZE,
   createTreeNavigator,
@@ -11,7 +12,7 @@ import {
 } from '../common/combinationsTreeLogic'
 
 function CombinationsTreePage() {
-  const [standThreshold, setStandThreshold] = useState<number>(17)
+  const standThreshold = useStandThreshold()
   const [finalHandsOnly, setFinalHandsOnly] = useState<boolean>(true)
   const [sequenceQuery, setSequenceQuery] = useState<string>('')
   const [page, setPage] = useState<number>(0)
@@ -53,10 +54,8 @@ function CombinationsTreePage() {
       </header>
 
       <CombinationsControls
-        standThreshold={standThreshold}
         finalHandsOnly={finalHandsOnly}
         sequenceQuery={sequenceQuery}
-        onThresholdChange={setStandThreshold}
         onFinalHandsOnlyChange={setFinalHandsOnly}
         onSequenceQueryChange={setSequenceQuery}
       />

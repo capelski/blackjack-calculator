@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import './ExpectedResultsPage.css'
 import type { CombinationItem } from '../common/combinationsTreeLogic'
 import {
@@ -6,11 +6,11 @@ import {
   createTreeNavigator,
   formatProbability,
 } from '../common/combinationsTreeLogic'
-import StandThresholdSlider from '../common/components/StandThresholdSlider'
 import {
   compareFinalScores,
   normalizedFinalScore,
 } from '../final-scores/finalScoresLogic'
+import { useStandThreshold } from '../stand-threshold/standThresholdContext'
 import {
   calculateOutcomeTotals,
   calculatePlayerRoi,
@@ -55,7 +55,7 @@ function formatReturnPerUnit(value: number): string {
 }
 
 function ExpectedResultsPage() {
-  const [standThreshold, setStandThreshold] = useState<number>(17)
+  const standThreshold = useStandThreshold()
 
   const playerScores = useMemo(
     () => groupScores(collectFinalCombinations(standThreshold)),
@@ -86,15 +86,6 @@ function ExpectedResultsPage() {
           against the dealer distribution (dealer threshold fixed at 17).
         </p>
       </header>
-
-      <section className="controls" aria-label="Expected results controls">
-        <StandThresholdSlider
-          value={standThreshold}
-          inputId="expected-results-threshold"
-          onChange={setStandThreshold}
-        />
-      </section>
-
       <section className="expected-summary" aria-label="Expected outcomes summary">
         <article className="expected-summary-card win">
           <h2>Wins</h2>

@@ -1,30 +1,18 @@
-import StandThresholdSlider from '../../common/components/StandThresholdSlider'
-
 type CombinationsControlsProps = {
-  standThreshold: number
   finalHandsOnly: boolean
   sequenceQuery: string
-  onThresholdChange: (value: number) => void
   onFinalHandsOnlyChange: (value: boolean) => void
   onSequenceQueryChange: (value: string) => void
 }
 
 function CombinationsControls({
-  standThreshold,
   finalHandsOnly,
   sequenceQuery,
-  onThresholdChange,
   onFinalHandsOnlyChange,
   onSequenceQueryChange,
 }: CombinationsControlsProps) {
   return (
-    <section className="controls" aria-label="Stand threshold controls">
-      <StandThresholdSlider
-        value={standThreshold}
-        inputId="threshold-slider"
-        onChange={onThresholdChange}
-      />
-
+    <section className="controls" aria-label="Combinations controls">
       <label className="checkbox-row" htmlFor="final-hands-only">
         <input
           id="final-hands-only"

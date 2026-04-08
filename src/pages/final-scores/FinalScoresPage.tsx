@@ -6,8 +6,8 @@ import {
   createTreeNavigator,
   formatProbability,
 } from '../common/combinationsTreeLogic'
-import StandThresholdSlider from '../common/components/StandThresholdSlider'
 import FinalScoreModal from './components/FinalScoreModal'
+import { useStandThreshold } from '../stand-threshold/standThresholdContext'
 import {
   type FinalScoreGroup,
   compareFinalScores,
@@ -15,7 +15,7 @@ import {
 } from './finalScoresLogic'
 
 function FinalScoresPage() {
-  const [standThreshold, setStandThreshold] = useState<number>(17)
+  const standThreshold = useStandThreshold()
   const [openScore, setOpenScore] = useState<string | null>(null)
 
   const treeNavigator = useMemo(() => createTreeNavigator(standThreshold, []), [standThreshold])
@@ -70,15 +70,6 @@ function FinalScoresPage() {
           the tree and see how much probability mass lands in each final score.
         </p>
       </header>
-
-      <section className="controls" aria-label="Stand threshold controls">
-        <StandThresholdSlider
-          value={standThreshold}
-          inputId="final-scores-threshold"
-          onChange={setStandThreshold}
-        />
-      </section>
-
       <section className="summary" aria-live="polite">
         <p>Total final score groups: {groupedScores.length}</p>
         <p>Total final combinations: {finalCombinations.length.toLocaleString()}</p>

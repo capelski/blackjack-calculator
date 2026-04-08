@@ -4,44 +4,30 @@ import CombinationsTreePage from './pages/combinations-tree/CombinationsTreePage
 import FinalScoresPage from './pages/final-scores/FinalScoresPage'
 import ExpectedResultsPage from './pages/expected-results/ExpectedResultsPage'
 import OptimalActionsPage from './pages/optimal-actions/OptimalActionsPage'
+import StandThresholdPage from './pages/stand-threshold/StandThresholdPage'
 
 function App() {
   return (
     <div className="app-shell">
       <nav className="app-nav" aria-label="Main navigation">
         <NavLink
-          to="/combinations-tree"
+          to="/stand-threshold"
           className={({ isActive }) => (isActive ? 'app-link active' : 'app-link')}
         >
-          Combinations tree
-        </NavLink>
-        <NavLink
-          to="/final-scores"
-          className={({ isActive }) => (isActive ? 'app-link active' : 'app-link')}
-        >
-          Final scores
-        </NavLink>
-        <NavLink
-          to="/expected-results"
-          className={({ isActive }) => (isActive ? 'app-link active' : 'app-link')}
-        >
-          Expected results
-        </NavLink>
-        <NavLink
-          to="/optimal-actions"
-          className={({ isActive }) => (isActive ? 'app-link active' : 'app-link')}
-        >
-          Optimal actions
+          Stand threshold
         </NavLink>
       </nav>
 
       <Routes>
-        <Route path="/" element={<Navigate to="/combinations-tree" replace />} />
-        <Route path="/combinations-tree" element={<CombinationsTreePage />} />
-        <Route path="/final-scores" element={<FinalScoresPage />} />
-        <Route path="/expected-results" element={<ExpectedResultsPage />} />
-        <Route path="/optimal-actions" element={<OptimalActionsPage />} />
-        <Route path="*" element={<Navigate to="/combinations-tree" replace />} />
+        <Route path="/" element={<Navigate to="/stand-threshold" replace />} />
+        <Route path="/stand-threshold" element={<StandThresholdPage />}>
+          <Route index element={<Navigate to="combinations-tree" replace />} />
+          <Route path="combinations-tree" element={<CombinationsTreePage />} />
+          <Route path="final-scores" element={<FinalScoresPage />} />
+          <Route path="expected-results" element={<ExpectedResultsPage />} />
+          <Route path="optimal-actions" element={<OptimalActionsPage />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/stand-threshold" replace />} />
       </Routes>
     </div>
   )
