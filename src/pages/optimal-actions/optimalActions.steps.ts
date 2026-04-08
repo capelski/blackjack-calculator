@@ -109,3 +109,21 @@ Then('the optimal-actions threshold action for score {int} and threshold {int} s
   const action = determineThresholdAction(score, threshold)
   assert.equal(action, expectedAction)
 })
+
+Then('the optimal-actions stand return per unit should be approximately {float}', (expected: number) => {
+  assert.ok(state.actionComparison, 'Expected action comparison to be computed')
+  const actual = state.actionComparison.standReturnPerUnit
+  assert.ok(
+    Math.abs(actual - expected) < 1e-4,
+    `Expected stand ROI approximately ${expected}, got ${actual}`,
+  )
+})
+
+Then('the optimal-actions hit return per unit should be approximately {float}', (expected: number) => {
+  assert.ok(state.actionComparison, 'Expected action comparison to be computed')
+  const actual = state.actionComparison.hitReturnPerUnit
+  assert.ok(
+    Math.abs(actual - expected) < 1e-4,
+    `Expected hit ROI approximately ${expected}, got ${actual}`,
+  )
+})
