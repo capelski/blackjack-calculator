@@ -65,6 +65,70 @@ Then('the recursive-decisions hit return per unit should be greater than the sta
   )
 })
 
+Then('the recursive-decisions stand win probability should be approximately {float}', (expected: number) => {
+  assert.ok(state.evaluation, 'Expected recursive evaluation to be computed')
+  assert.ok(
+    Math.abs(state.evaluation.standOutcomes.win - expected) < TOLERANCE,
+    `Expected stand win probability ${expected}, got ${state.evaluation.standOutcomes.win}`,
+  )
+})
+
+Then('the recursive-decisions stand draw probability should be approximately {float}', (expected: number) => {
+  assert.ok(state.evaluation, 'Expected recursive evaluation to be computed')
+  assert.ok(
+    Math.abs(state.evaluation.standOutcomes.draw - expected) < TOLERANCE,
+    `Expected stand draw probability ${expected}, got ${state.evaluation.standOutcomes.draw}`,
+  )
+})
+
+Then('the recursive-decisions stand lose probability should be approximately {float}', (expected: number) => {
+  assert.ok(state.evaluation, 'Expected recursive evaluation to be computed')
+  assert.ok(
+    Math.abs(state.evaluation.standOutcomes.lose - expected) < TOLERANCE,
+    `Expected stand lose probability ${expected}, got ${state.evaluation.standOutcomes.lose}`,
+  )
+})
+
+Then('the recursive-decisions stand return per unit should be approximately {float}', (expected: number) => {
+  assert.ok(state.evaluation, 'Expected recursive evaluation to be computed')
+  assert.ok(
+    Math.abs(state.evaluation.standReturnPerUnit - expected) < TOLERANCE,
+    `Expected stand return per unit ${expected}, got ${state.evaluation.standReturnPerUnit}`,
+  )
+})
+
+Then('the recursive-decisions hit win probability should be approximately {float}', (expected: number) => {
+  assert.ok(state.evaluation, 'Expected recursive evaluation to be computed')
+  assert.ok(
+    Math.abs(state.evaluation.hitOutcomes.win - expected) < TOLERANCE,
+    `Expected hit win probability ${expected}, got ${state.evaluation.hitOutcomes.win}`,
+  )
+})
+
+Then('the recursive-decisions hit draw probability should be approximately {float}', (expected: number) => {
+  assert.ok(state.evaluation, 'Expected recursive evaluation to be computed')
+  assert.ok(
+    Math.abs(state.evaluation.hitOutcomes.draw - expected) < TOLERANCE,
+    `Expected hit draw probability ${expected}, got ${state.evaluation.hitOutcomes.draw}`,
+  )
+})
+
+Then('the recursive-decisions hit lose probability should be approximately {float}', (expected: number) => {
+  assert.ok(state.evaluation, 'Expected recursive evaluation to be computed')
+  assert.ok(
+    Math.abs(state.evaluation.hitOutcomes.lose - expected) < TOLERANCE,
+    `Expected hit lose probability ${expected}, got ${state.evaluation.hitOutcomes.lose}`,
+  )
+})
+
+Then('the recursive-decisions hit return per unit should be approximately {float}', (expected: number) => {
+  assert.ok(state.evaluation, 'Expected recursive evaluation to be computed')
+  assert.ok(
+    Math.abs(state.evaluation.hitReturnPerUnit - expected) < TOLERANCE,
+    `Expected hit return per unit ${expected}, got ${state.evaluation.hitReturnPerUnit}`,
+  )
+})
+
 Then('the recursive-decisions stand ROI should match win-loss formula', () => {
   assert.ok(state.evaluation, 'Expected recursive evaluation to be computed')
 
