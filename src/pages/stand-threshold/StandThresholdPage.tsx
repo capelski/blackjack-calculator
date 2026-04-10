@@ -1,11 +1,16 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import StandThresholdSlider from '../common/components/StandThresholdSlider'
-import type { StandThresholdOutletContext } from './standThresholdContext'
+import { DecisionPolicyContext } from '../common/decisionPolicyContext'
 import './StandThresholdPage.css'
 
 function StandThresholdPage() {
   const [standThreshold, setStandThreshold] = useState<number>(17)
+  const decisionPolicy = useMemo(
+    () => ({ score, cardCount }: { score: number; cardCount: number }) =>
+      (cardCount >= 2 && score >= standThreshold ? 'Stand' : 'Hit'),
+    [standThreshold],
+  )
 
   return (
     <div className="combination-page stand-threshold-page">
@@ -55,7 +60,16 @@ function StandThresholdPage() {
       </nav>
 
       <section className="stand-threshold-content">
-        <Outlet context={{ standThreshold } satisfies StandThresholdOutletContext} />
+        <DecisionPolicyContext.Provider
+          value={{
+            mode: 'stand-threshold',
+            decisionPolicy,
+            standThreshold,
+            recursiveDecisionModel: null,
+          }}
+        >
+          <Outlet />
+        </DecisionPolicyContext.Provider>
       </section>
     </div>
   )

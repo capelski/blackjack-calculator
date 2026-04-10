@@ -4,15 +4,15 @@ import CombinationsControls from './components/CombinationsControls'
 import CombinationsPagination from './components/CombinationsPagination'
 import CombinationsSummary from './components/CombinationsSummary'
 import HandOutcomesTable from '../common/components/HandOutcomesTable'
-import { useStandThreshold } from '../stand-threshold/standThresholdContext'
+import { useDecisionPolicyContext } from '../common/decisionPolicyContext'
 import {
   PAGE_SIZE,
-  createTreeNavigator,
+  createPolicyTreeNavigator,
   parseSequenceQuery,
 } from '../common/combinationsTreeLogic'
 
 function CombinationsTreePage() {
-  const standThreshold = useStandThreshold()
+  const { decisionPolicy, mode } = useDecisionPolicyContext()
   const [finalHandsOnly, setFinalHandsOnly] = useState<boolean>(true)
   const [sequenceQuery, setSequenceQuery] = useState<string>('')
   const [page, setPage] = useState<number>(0)
@@ -21,8 +21,8 @@ function CombinationsTreePage() {
   const sequenceKey = useMemo(() => sequenceTokens.join('|'), [sequenceTokens])
 
   const treeNavigator = useMemo(
-    () => createTreeNavigator(standThreshold, sequenceTokens),
-    [sequenceKey, standThreshold],
+    () => createPolicyTreeNavigator(decisionPolicy, sequenceTokens),
+    [decisionPolicy, sequenceKey],
   )
 
   const totalCombinations = useMemo(
@@ -40,7 +40,7 @@ function CombinationsTreePage() {
 
   useEffect(() => {
     setPage(0)
-  }, [finalHandsOnly, sequenceKey, standThreshold])
+  }, [decisionPolicy, finalHandsOnly, sequenceKey])
 
   return (
     <main className="combination-page">
@@ -48,8 +48,9 @@ function CombinationsTreePage() {
         <p className="eyebrow">Blackjack Analyzer</p>
         <h1>Combinations Tree</h1>
         <p className="intro">
-          Terminal player hands generated from a recursive card tree. The player keeps
-          hitting until the hand score reaches the stand threshold or busts.
+          {mode === 'stand-threshold'
+            ? 'Terminal player hands generated from a recursive card tree. The player keeps hitting until the hand score reaches the stand threshold or busts.'
+            : 'Terminal player hands generated from a recursive card tree. At each score, the player chooses the action with the highest expected return per unit.'}
         </p>
       </header>
 

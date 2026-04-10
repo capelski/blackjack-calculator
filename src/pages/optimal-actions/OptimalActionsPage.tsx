@@ -1,8 +1,7 @@
 import { useMemo } from 'react'
 import './OptimalActionsPage.css'
 import { formatProbability } from '../common/combinationsTreeLogic'
-import { compareFinalScores } from '../final-scores/finalScoresLogic'
-import { useStandThreshold } from '../stand-threshold/standThresholdContext'
+import { useDecisionPolicyContext } from '../common/decisionPolicyContext'
 import {
   collectFinalCombinations,
   computeHitOutcomesWithThreshold,
@@ -22,8 +21,6 @@ type ActionRow = {
 
 type ScoreActionGroup = {
   id: string
-  score: number
-  handType: 'Hard' | 'Soft'
   scoreLabel: string
   rows: ActionRow[]
   optimalAction: 'Stand' | 'Hit'
@@ -35,7 +32,7 @@ function formatReturnPerUnit(value: number): string {
 }
 
 function OptimalActionsPage() {
-  const standThreshold = useStandThreshold()
+  const { mode, standThreshold, recursiveDecisionModel } = useDecisionPolicyContext()
   const dealerScores = useMemo(() => groupScores(collectFinalCombinations(17)), [])
 
   const scoreActionGroups = useMemo<ScoreActionGroup[]>(() => {
@@ -43,18 +40,34 @@ function OptimalActionsPage() {
 
     return states.map((state) => {
       const standOutcomes = computeStandOutcomes(`${state.score}`, dealerScores)
-      const hitOutcomes = computeHitOutcomesWithThreshold(state, dealerScores, standThreshold)
-
       const standReturnPerUnit = 1 + standOutcomes.win - standOutcomes.lose
-      const hitReturnPerUnit = 1 + hitOutcomes.win - hitOutcomes.lose
-      const optimalAction: 'Stand' | 'Hit' = hitReturnPerUnit > standReturnPerUnit ? 'Hit' : 'Stand'
-      const thresholdAction = determineThresholdAction(state.score, standThreshold)
-      const conflictsWithThreshold = optimalAction !== thresholdAction
+
+      const thresholdHitOutcomes = computeHitOutcomesWithThreshold(
+        state,
+        dealerScores,
+        standThreshold ?? 17,
+      )
+      const thresholdHitReturnPerUnit = 1 + thresholdHitOutcomes.win - thresholdHitOutcomes.lose
+
+      const recursiveEvaluation = recursiveDecisionModel?.evaluateState(state) ?? null
+
+      const hitOutcomes = mode === 'recursive-decisions'
+        ? (recursiveEvaluation?.hitOutcomes ?? thresholdHitOutcomes)
+        : thresholdHitOutcomes
+      const hitReturnPerUnit = mode === 'recursive-decisions'
+        ? (recursiveEvaluation?.hitReturnPerUnit ?? thresholdHitReturnPerUnit)
+        : thresholdHitReturnPerUnit
+      const optimalAction: 'Stand' | 'Hit' = mode === 'recursive-decisions'
+        ? (recursiveEvaluation?.action ?? (hitReturnPerUnit > standReturnPerUnit ? 'Hit' : 'Stand'))
+        : (hitReturnPerUnit > standReturnPerUnit ? 'Hit' : 'Stand')
+
+      const thresholdAction = determineThresholdAction(state.score, standThreshold ?? 17)
+      const conflictsWithThreshold = mode === 'stand-threshold'
+        ? optimalAction !== thresholdAction
+        : false
 
       return {
         id: `${state.handType}-${state.score}`,
-        score: state.score,
-        handType: state.handType,
         scoreLabel: formatScoreLabel(state.score, state.handType),
         rows: [
           {
@@ -72,15 +85,7 @@ function OptimalActionsPage() {
         conflictsWithThreshold,
       }
     })
-  }, [dealerScores, standThreshold])
-
-  const dealerLabels = useMemo(
-    () => [...dealerScores.keys()].sort((left, right) => compareFinalScores(
-      { score: left, probability: 0, combinations: [] },
-      { score: right, probability: 0, combinations: [] },
-    )),
-    [dealerScores],
-  )
+  }, [dealerScores, mode, recursiveDecisionModel, standThreshold])
 
   return (
     <main className="combination-page">
@@ -88,13 +93,18 @@ function OptimalActionsPage() {
         <p className="eyebrow">Blackjack Analyzer</p>
         <h1>Optimal Actions</h1>
         <p className="intro">
-          For each player score, compare expected outcomes for standing now versus
-          hitting exactly one card and then standing. Hard and soft scores are shown separately.
+          {mode === 'stand-threshold'
+            ? 'For each player score, compare expected outcomes for standing now versus hitting and then following the threshold policy. Hard and soft scores are shown separately.'
+            : 'For each player score, compare expected outcomes for standing now versus hitting and then following recursive ROI-maximizing decisions.'}
         </p>
       </header>
       <section className="summary" aria-live="polite">
         <p>Dealer policy: stands on 17</p>
-        <p>Dealer final scores: {dealerLabels.join(', ')}</p>
+        <p>
+          {mode === 'stand-threshold'
+            ? `Player policy: stand at ${standThreshold ?? 17}+`
+            : 'Player policy: recursive ROI maximization'}
+        </p>
       </section>
 
       <section className="combination-table optimal-actions-shell" aria-label="Optimal actions table">
@@ -122,7 +132,7 @@ function OptimalActionsPage() {
                   <td className="roi-cell">{formatReturnPerUnit(group.rows[0].returnPerUnit)}</td>
                   <td rowSpan={2} className={`optimal-action-cell ${group.conflictsWithThreshold ? 'conflict' : ''}`}>
                     {group.optimalAction}
-                    {group.conflictsWithThreshold && <span className="conflict-warning" aria-label="Conflicts with threshold">⚠</span>}
+                    {group.conflictsWithThreshold && <span className="conflict-warning" aria-label="Conflicts with threshold">!</span>}
                   </td>
                 </tr>,
                 <tr key={`${group.id}-hit`}>

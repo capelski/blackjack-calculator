@@ -1,7 +1,23 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { useMemo } from 'react'
+import { DecisionPolicyContext } from '../common/decisionPolicyContext'
+import {
+  createDealerScoresForStandardRules,
+  createRecursiveDecisionModel,
+} from './recursiveDecisionsLogic'
 import './RecursiveDecisionsPage.css'
 
 function RecursiveDecisionsPage() {
+  const dealerScores = useMemo(() => createDealerScoresForStandardRules(), [])
+  const recursiveDecisionModel = useMemo(
+    () => createRecursiveDecisionModel(dealerScores),
+    [dealerScores],
+  )
+  const decisionPolicy = useMemo(
+    () => recursiveDecisionModel.createTreePolicy(),
+    [recursiveDecisionModel],
+  )
+
   return (
     <div className="combination-page recursive-decisions-page">
       <header className="combination-header">
@@ -42,7 +58,16 @@ function RecursiveDecisionsPage() {
       </nav>
 
       <section className="recursive-decisions-content">
-        <Outlet />
+        <DecisionPolicyContext.Provider
+          value={{
+            mode: 'recursive-decisions',
+            decisionPolicy,
+            standThreshold: null,
+            recursiveDecisionModel,
+          }}
+        >
+          <Outlet />
+        </DecisionPolicyContext.Provider>
       </section>
     </div>
   )

@@ -1,13 +1,11 @@
 import { useMemo, useState } from 'react'
 import './FinalScoresPage.css'
-import type { CombinationItem } from '../common/combinationsTreeLogic'
 import {
-  PAGE_SIZE,
-  createTreeNavigator,
   formatProbability,
 } from '../common/combinationsTreeLogic'
 import FinalScoreModal from './components/FinalScoreModal'
-import { useStandThreshold } from '../stand-threshold/standThresholdContext'
+import { useDecisionPolicyContext } from '../common/decisionPolicyContext'
+import { collectFinalCombinationsWithPolicy } from '../common/finalCombinationsPolicyLogic'
 import {
   type FinalScoreGroup,
   compareFinalScores,
@@ -15,22 +13,13 @@ import {
 } from './finalScoresLogic'
 
 function FinalScoresPage() {
-  const standThreshold = useStandThreshold()
+  const { decisionPolicy, mode } = useDecisionPolicyContext()
   const [openScore, setOpenScore] = useState<string | null>(null)
 
-  const treeNavigator = useMemo(() => createTreeNavigator(standThreshold, []), [standThreshold])
-
-  const finalCombinations = useMemo(() => {
-    const total = treeNavigator.getTotalCombinations(true)
-    const pages = Math.ceil(total / PAGE_SIZE)
-    const items: CombinationItem[] = []
-
-    for (let page = 0; page < pages; page += 1) {
-      items.push(...treeNavigator.getPage(page, PAGE_SIZE, true))
-    }
-
-    return items
-  }, [treeNavigator])
+  const finalCombinations = useMemo(
+    () => collectFinalCombinationsWithPolicy(decisionPolicy),
+    [decisionPolicy],
+  )
 
   const groupedScores = useMemo(() => {
     const grouped = new Map<string, FinalScoreGroup>()
@@ -66,8 +55,9 @@ function FinalScoresPage() {
         <p className="eyebrow">Blackjack Analyzer</p>
         <h1>Final Scores</h1>
         <p className="intro">
-          Final hand outcomes grouped by score. Move the stand threshold to regenerate
-          the tree and see how much probability mass lands in each final score.
+          {mode === 'stand-threshold'
+            ? 'Final hand outcomes grouped by score. Move the stand threshold to regenerate the tree and see how much probability mass lands in each final score.'
+            : 'Final hand outcomes grouped by score using recursive action selection at each hand state.'}
         </p>
       </header>
       <section className="summary" aria-live="polite">

@@ -1,34 +1,20 @@
 import { useMemo } from 'react'
 import './ExpectedResultsPage.css'
-import type { CombinationItem } from '../common/combinationsTreeLogic'
 import {
-  PAGE_SIZE,
-  createTreeNavigator,
+  type CombinationItem,
   formatProbability,
 } from '../common/combinationsTreeLogic'
 import {
   compareFinalScores,
   normalizedFinalScore,
 } from '../final-scores/finalScoresLogic'
-import { useStandThreshold } from '../stand-threshold/standThresholdContext'
+import { useDecisionPolicyContext } from '../common/decisionPolicyContext'
+import { collectFinalCombinationsWithPolicy } from '../common/finalCombinationsPolicyLogic'
 import {
   calculateOutcomeTotals,
   calculatePlayerRoi,
   outcomeClass,
 } from './expectedResultsLogic'
-
-function collectFinalCombinations(standThreshold: number): CombinationItem[] {
-  const treeNavigator = createTreeNavigator(standThreshold, [])
-  const total = treeNavigator.getTotalCombinations(true)
-  const pages = Math.ceil(total / PAGE_SIZE)
-  const items: CombinationItem[] = []
-
-  for (let page = 0; page < pages; page += 1) {
-    items.push(...treeNavigator.getPage(page, PAGE_SIZE, true))
-  }
-
-  return items
-}
 
 function groupScores(combinations: CombinationItem[]): Map<string, number> {
   const grouped = new Map<string, number>()
@@ -55,14 +41,19 @@ function formatReturnPerUnit(value: number): string {
 }
 
 function ExpectedResultsPage() {
-  const standThreshold = useStandThreshold()
+  const { decisionPolicy, mode } = useDecisionPolicyContext()
 
   const playerScores = useMemo(
-    () => groupScores(collectFinalCombinations(standThreshold)),
-    [standThreshold],
+    () => groupScores(collectFinalCombinationsWithPolicy(decisionPolicy)),
+    [decisionPolicy],
   )
 
-  const dealerScores = useMemo(() => groupScores(collectFinalCombinations(17)), [])
+  const dealerScores = useMemo(
+    () => groupScores(collectFinalCombinationsWithPolicy(
+      ({ score, cardCount }) => (cardCount >= 2 && score >= 17 ? 'Stand' : 'Hit'),
+    )),
+    [],
+  )
 
   const playerLabels = useMemo(() => sortScores([...playerScores.keys()]), [playerScores])
   const dealerLabels = useMemo(() => sortScores([...dealerScores.keys()]), [dealerScores])
@@ -82,8 +73,9 @@ function ExpectedResultsPage() {
         <p className="eyebrow">Blackjack Analyzer</p>
         <h1>Expected Results</h1>
         <p className="intro">
-          Compare the player final score distribution for the selected stand threshold
-          against the dealer distribution (dealer threshold fixed at 17).
+          {mode === 'stand-threshold'
+            ? 'Compare the player final score distribution for the selected stand threshold against the dealer distribution (dealer threshold fixed at 17).'
+            : 'Compare the recursive-policy player final score distribution against the dealer distribution (dealer threshold fixed at 17).'}
         </p>
       </header>
       <section className="expected-summary" aria-label="Expected outcomes summary">
