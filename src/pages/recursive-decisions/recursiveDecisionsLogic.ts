@@ -1,22 +1,22 @@
 import type {
   CombinationItem,
   TreeDecisionPolicy,
-} from '../common/combinationsTreeLogic'
+} from '../common/combinationsTreeLogic.ts'
 import {
   PAGE_SIZE,
   createPolicyTreeNavigator,
-} from '../common/combinationsTreeLogic'
+} from '../common/combinationsTreeLogic.ts'
 import type {
   OutcomeTotals,
   ScoreState,
-} from '../optimal-actions/optimalActionsLogic'
+} from '../optimal-actions/optimalActionsLogic.ts'
 import {
   DRAW_OPTIONS,
   collectFinalCombinations,
   computeHitTransition,
   computeStandOutcomes,
   groupScores,
-} from '../optimal-actions/optimalActionsLogic'
+} from '../optimal-actions/optimalActionsLogic.ts'
 
 export type RecursiveEvaluation = {
   standOutcomes: OutcomeTotals
