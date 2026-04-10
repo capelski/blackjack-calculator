@@ -18,6 +18,16 @@ export type TreeNavigator = {
   getPage: (pageIndex: number, pageSize: number, finalHandsOnly: boolean) => CombinationItem[]
 }
 
+export type TreeDecisionState = {
+  score: number
+  cardCount: number
+  totals: number[]
+  isSoft: boolean
+  hasBlackjack: boolean
+}
+
+export type TreeDecisionPolicy = (state: TreeDecisionState) => 'Stand' | 'Hit'
+
 export const PAGE_SIZE = 150
 
 const CARD_OPTIONS = [
@@ -92,6 +102,10 @@ function bestScore(totals: number[]): number {
   return Math.min(...totals)
 }
 
+function isSoftTotal(totals: number[]): boolean {
+  return totals.filter((score) => score <= 21).length > 1
+}
+
 function isBlackjack(cardCount: number, totals: number[]): boolean {
   return cardCount === 2 && bestScore(totals) === 21
 }
@@ -124,7 +138,10 @@ export function formatProbability(probability: number): string {
   return `${percentage.toExponential(2)}%`
 }
 
-export function createTreeNavigator(threshold: number, sequenceTokens: string[]): TreeNavigator {
+export function createPolicyTreeNavigator(
+  decideAction: TreeDecisionPolicy,
+  sequenceTokens: string[],
+): TreeNavigator {
   const countMemo = new Map<string, number>()
   const prefixTable = buildPrefixTable(sequenceTokens)
 
@@ -166,7 +183,16 @@ export function createTreeNavigator(threshold: number, sequenceTokens: string[])
     const score = bestScore(totals)
     const canStand = cardCount >= 2
     const hasBlackjack = isBlackjack(cardCount, totals)
-    const isTerminal = hasBlackjack || score > 21 || (canStand && score >= threshold)
+    const action = canStand
+      ? decideAction({
+        score,
+        cardCount,
+        totals,
+        isSoft: isSoftTotal(totals),
+        hasBlackjack,
+      })
+      : 'Hit'
+    const isTerminal = hasBlackjack || score > 21 || (canStand && action === 'Stand')
 
     if (isTerminal) {
       const terminalCount = hasMatched ? 1 : 0
@@ -198,7 +224,16 @@ export function createTreeNavigator(threshold: number, sequenceTokens: string[])
     const walk = (totals: number[], cards: string[], probability: number, matchState: number, hasMatched: boolean): void => {
       const score = bestScore(totals)
       const hasBlackjack = isBlackjack(cards.length, totals)
-      const isTerminal = hasBlackjack || score > 21 || (cards.length >= 2 && score >= threshold)
+      const action = cards.length >= 2
+        ? decideAction({
+          score,
+          cardCount: cards.length,
+          totals,
+          isSoft: isSoftTotal(totals),
+          hasBlackjack,
+        })
+        : 'Hit'
+      const isTerminal = hasBlackjack || score > 21 || (cards.length >= 2 && action === 'Stand')
       const shouldIncludeCurrent = cards.length > 0 && (!finalHandsOnly || isTerminal)
 
       if (shouldIncludeCurrent && hasMatched) {
@@ -250,4 +285,11 @@ export function createTreeNavigator(threshold: number, sequenceTokens: string[])
       countFromTotals([0], 0, finalHandsOnly, 0, sequenceTokens.length === 0),
     getPage,
   }
+}
+
+export function createTreeNavigator(threshold: number, sequenceTokens: string[]): TreeNavigator {
+  return createPolicyTreeNavigator(
+    ({ score, cardCount }) => (cardCount >= 2 && score >= threshold ? 'Stand' : 'Hit'),
+    sequenceTokens,
+  )
 }
