@@ -5,7 +5,7 @@ import FinalScoresPage from './pages/final-scores/FinalScoresPage'
 import ExpectedResultsPage from './pages/expected-results/ExpectedResultsPage'
 import OptimalActionsPage from './pages/optimal-actions/OptimalActionsPage'
 import StandThresholdPage from './pages/stand-threshold/StandThresholdPage'
-import RecursiveDecisionsPage from './pages/recursive-decisions/RecursiveDecisionsPage.jsx'
+import RecursiveDecisionsPage from './pages/recursive-decisions/RecursiveDecisionsPage'
 
 function App() {
   return (
