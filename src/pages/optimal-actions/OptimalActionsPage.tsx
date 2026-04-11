@@ -23,7 +23,7 @@ type ScoreActionGroup = {
   id: string
   scoreLabel: string
   rows: ActionRow[]
-  optimalAction: 'Stand' | 'Hit'
+  optimalAction: 'Stand' | 'Hit' | 'Double'
   conflictsWithThreshold: boolean
 }
 
@@ -57,7 +57,7 @@ function OptimalActionsPage() {
       const hitReturnPerUnit = mode === 'recursive-decisions'
         ? (recursiveEvaluation?.hitReturnPerUnit ?? thresholdHitReturnPerUnit)
         : thresholdHitReturnPerUnit
-      const optimalAction: 'Stand' | 'Hit' = mode === 'recursive-decisions'
+      const optimalAction: 'Stand' | 'Hit' | 'Double' = mode === 'recursive-decisions'
         ? (recursiveEvaluation?.action ?? (hitReturnPerUnit > standReturnPerUnit ? 'Hit' : 'Stand'))
         : (hitReturnPerUnit > standReturnPerUnit ? 'Hit' : 'Stand')
 

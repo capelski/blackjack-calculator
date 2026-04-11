@@ -23,14 +23,16 @@ export type RecursiveEvaluation = {
   standReturnPerUnit: number
   hitOutcomes: OutcomeTotals
   hitReturnPerUnit: number
+  doubleOutcomes: OutcomeTotals
+  doubleReturnPerUnit: number
   bestOutcomes: OutcomeTotals
   bestReturnPerUnit: number
-  action: 'Stand' | 'Hit'
+  action: 'Stand' | 'Hit' | 'Double'
 }
 
 export type RecursiveDecisionModel = {
   evaluateState: (state: ScoreState) => RecursiveEvaluation
-  selectAction: (score: number, isSoft: boolean) => 'Stand' | 'Hit'
+  selectAction: (score: number, isSoft: boolean) => 'Stand' | 'Hit' | 'Double'
   createTreePolicy: () => TreeDecisionPolicy
 }
 
@@ -66,7 +68,7 @@ export function createDealerScoresForStandardRules(): Map<string, number> {
   return groupScores(collectFinalCombinations(17))
 }
 
-export function createRecursiveDecisionModel(dealerScores: Map<string, number>): RecursiveDecisionModel {
+export function createRecursiveDecisionModel(dealerScores: Map<string, number>, doublingEnabled = false): RecursiveDecisionModel {
   const cache = new Map<string, RecursiveEvaluation>()
 
   const evaluateState = (state: ScoreState): RecursiveEvaluation => {
@@ -105,14 +107,41 @@ export function createRecursiveDecisionModel(dealerScores: Map<string, number>):
       hitReturnPerUnit += nextEvaluation.bestReturnPerUnit * draw.probability
     }
 
-    const action: 'Stand' | 'Hit' = hitReturnPerUnit > standReturnPerUnit ? 'Hit' : 'Stand'
-    const bestReturnPerUnit = action === 'Hit' ? hitReturnPerUnit : standReturnPerUnit
-    const bestOutcomes = action === 'Hit' ? cloneOutcomes(hitOutcomes) : cloneOutcomes(standOutcomes)
+    const hitVsStandAction: 'Stand' | 'Hit' = hitReturnPerUnit > standReturnPerUnit ? 'Hit' : 'Stand'
+    const bestReturnPerUnit = hitVsStandAction === 'Hit' ? hitReturnPerUnit : standReturnPerUnit
+    const bestOutcomes = hitVsStandAction === 'Hit' ? cloneOutcomes(hitOutcomes) : cloneOutcomes(standOutcomes)
+
+    const doubleOutcomes: OutcomeTotals = { win: 0, draw: 0, lose: 0 }
+    let doubleReturnPerUnit = 0
+
+    if (doublingEnabled) {
+      for (const draw of DRAW_OPTIONS) {
+        const transition = computeHitTransition(state, draw.cardValue)
+
+        if (transition.bust) {
+          doubleOutcomes.lose += draw.probability
+          continue
+        }
+
+        const nextStandOutcomes = computeStandOutcomes(`${transition.total}`, dealerScores)
+        const nextStandReturnPerUnit = 1 + nextStandOutcomes.win - nextStandOutcomes.lose
+        doubleReturnPerUnit += draw.probability * 2 * nextStandReturnPerUnit
+        doubleOutcomes.win += draw.probability * nextStandOutcomes.win
+        doubleOutcomes.draw += draw.probability * nextStandOutcomes.draw
+        doubleOutcomes.lose += draw.probability * nextStandOutcomes.lose
+      }
+    }
+
+    const action: 'Stand' | 'Hit' | 'Double' =
+      doublingEnabled && doubleReturnPerUnit > bestReturnPerUnit ? 'Double' : hitVsStandAction
+
     const evaluation: RecursiveEvaluation = {
       standOutcomes,
       standReturnPerUnit,
       hitOutcomes,
       hitReturnPerUnit,
+      doubleOutcomes,
+      doubleReturnPerUnit,
       bestOutcomes,
       bestReturnPerUnit,
       action,
@@ -124,7 +153,7 @@ export function createRecursiveDecisionModel(dealerScores: Map<string, number>):
 
   return {
     evaluateState,
-    selectAction: (score: number, isSoft: boolean): 'Stand' | 'Hit' =>
+    selectAction: (score: number, isSoft: boolean) =>
       evaluateState(toState(score, isSoft)).action,
     createTreePolicy: () => ({ score, cardCount, isSoft, hasBlackjack }) => {
       if (hasBlackjack || score > 21) {
@@ -135,7 +164,8 @@ export function createRecursiveDecisionModel(dealerScores: Map<string, number>):
         return 'Hit'
       }
 
-      return evaluateState(toState(score, isSoft)).action
+      const action = evaluateState(toState(score, isSoft)).action
+      return action === 'Double' ? 'Hit' : action
     },
   }
 }
