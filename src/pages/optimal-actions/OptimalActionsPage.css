@@ -63,6 +63,11 @@
   background: rgba(209, 176, 80, 0.21);
 }
 
+.action-cell.double {
+  color: #1a3a6b;
+  background: rgba(59, 130, 246, 0.16);
+}
+
 .roi-cell {
   font-weight: 700;
 }

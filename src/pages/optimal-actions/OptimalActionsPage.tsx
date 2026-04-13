@@ -14,7 +14,7 @@ import {
 } from './optimalActionsLogic'
 
 type ActionRow = {
-  action: 'Stand' | 'Hit'
+  action: 'Stand' | 'Hit' | 'Double'
   outcomes: OutcomeTotals
   returnPerUnit: number
 }
@@ -32,7 +32,7 @@ function formatReturnPerUnit(value: number): string {
 }
 
 function OptimalActionsPage() {
-  const { mode, standThreshold, recursiveDecisionModel } = useDecisionPolicyContext()
+  const { mode, standThreshold, recursiveDecisionModel, doublingEnabled } = useDecisionPolicyContext()
   const dealerScores = useMemo(() => groupScores(collectFinalCombinations(17)), [])
 
   const scoreActionGroups = useMemo<ScoreActionGroup[]>(() => {
@@ -66,6 +66,14 @@ function OptimalActionsPage() {
         ? optimalAction !== thresholdAction
         : false
 
+      const doubleRow: ActionRow | null = doublingEnabled && recursiveEvaluation
+        ? {
+            action: 'Double',
+            outcomes: recursiveEvaluation.doubleOutcomes,
+            returnPerUnit: recursiveEvaluation.doubleReturnPerUnit,
+          }
+        : null
+
       return {
         id: `${state.handType}-${state.score}`,
         scoreLabel: formatScoreLabel(state.score, state.handType),
@@ -80,12 +88,13 @@ function OptimalActionsPage() {
             outcomes: hitOutcomes,
             returnPerUnit: hitReturnPerUnit,
           },
+          ...(doubleRow ? [doubleRow] : []),
         ],
         optimalAction,
         conflictsWithThreshold,
       }
     })
-  }, [dealerScores, mode, recursiveDecisionModel, standThreshold])
+  }, [dealerScores, doublingEnabled, mode, recursiveDecisionModel, standThreshold])
 
   return (
     <main className="combination-page">
@@ -122,27 +131,41 @@ function OptimalActionsPage() {
               </tr>
             </thead>
             <tbody>
-              {scoreActionGroups.flatMap((group) => [
-                <tr key={`${group.id}-stand`}>
-                  <th scope="row" rowSpan={2} className="state-cell score-cell">{group.scoreLabel}</th>
-                  <td className="action-cell stand">Stand</td>
-                  <td>{formatProbability(group.rows[0].outcomes.win)}</td>
-                  <td>{formatProbability(group.rows[0].outcomes.draw)}</td>
-                  <td>{formatProbability(group.rows[0].outcomes.lose)}</td>
-                  <td className="roi-cell">{formatReturnPerUnit(group.rows[0].returnPerUnit)}</td>
-                  <td rowSpan={2} className={`optimal-action-cell ${group.conflictsWithThreshold ? 'conflict' : ''}`}>
-                    {group.optimalAction}
-                    {group.conflictsWithThreshold && <span className="conflict-warning" aria-label="Conflicts with threshold">!</span>}
-                  </td>
-                </tr>,
-                <tr key={`${group.id}-hit`}>
-                  <td className="action-cell hit">Hit</td>
-                  <td>{formatProbability(group.rows[1].outcomes.win)}</td>
-                  <td>{formatProbability(group.rows[1].outcomes.draw)}</td>
-                  <td>{formatProbability(group.rows[1].outcomes.lose)}</td>
-                  <td className="roi-cell">{formatReturnPerUnit(group.rows[1].returnPerUnit)}</td>
-                </tr>,
-              ])}
+              {scoreActionGroups.flatMap((group) => {
+                const rowSpan = group.rows.length
+                return [
+                  <tr key={`${group.id}-stand`}>
+                    <th scope="row" rowSpan={rowSpan} className="state-cell score-cell">{group.scoreLabel}</th>
+                    <td className="action-cell stand">Stand</td>
+                    <td>{formatProbability(group.rows[0].outcomes.win)}</td>
+                    <td>{formatProbability(group.rows[0].outcomes.draw)}</td>
+                    <td>{formatProbability(group.rows[0].outcomes.lose)}</td>
+                    <td className="roi-cell">{formatReturnPerUnit(group.rows[0].returnPerUnit)}</td>
+                    <td rowSpan={rowSpan} className={`optimal-action-cell ${group.conflictsWithThreshold ? 'conflict' : ''}`}>
+                      {group.optimalAction}
+                      {group.conflictsWithThreshold && <span className="conflict-warning" aria-label="Conflicts with threshold">!</span>}
+                    </td>
+                  </tr>,
+                  <tr key={`${group.id}-hit`}>
+                    <td className="action-cell hit">Hit</td>
+                    <td>{formatProbability(group.rows[1].outcomes.win)}</td>
+                    <td>{formatProbability(group.rows[1].outcomes.draw)}</td>
+                    <td>{formatProbability(group.rows[1].outcomes.lose)}</td>
+                    <td className="roi-cell">{formatReturnPerUnit(group.rows[1].returnPerUnit)}</td>
+                  </tr>,
+                  ...(group.rows[2]
+                    ? [
+                        <tr key={`${group.id}-double`}>
+                          <td className="action-cell double">Double</td>
+                          <td>{formatProbability(group.rows[2].outcomes.win)}</td>
+                          <td>{formatProbability(group.rows[2].outcomes.draw)}</td>
+                          <td>{formatProbability(group.rows[2].outcomes.lose)}</td>
+                          <td className="roi-cell">{formatReturnPerUnit(group.rows[2].returnPerUnit)}</td>
+                        </tr>,
+                      ]
+                    : []),
+                ]
+              })}
             </tbody>
           </table>
         </div>

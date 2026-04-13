@@ -9,6 +9,7 @@ export type DecisionPolicyContextValue = {
   decisionPolicy: TreeDecisionPolicy
   standThreshold: number | null
   recursiveDecisionModel: RecursiveDecisionModel | null
+  doublingEnabled: boolean
 }
 
 export const DecisionPolicyContext = createContext<DecisionPolicyContextValue | null>(null)

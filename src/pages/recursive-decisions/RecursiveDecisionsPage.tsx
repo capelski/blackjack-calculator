@@ -48,6 +48,7 @@ function RecursiveDecisionsPage() {
             decisionPolicy,
             standThreshold: null,
             recursiveDecisionModel,
+            doublingEnabled,
           }}
         >
           <Outlet />

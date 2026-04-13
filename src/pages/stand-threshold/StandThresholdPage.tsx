@@ -38,6 +38,7 @@ function StandThresholdPage() {
             decisionPolicy,
             standThreshold,
             recursiveDecisionModel: null,
+            doublingEnabled: false,
           }}
         >
           <Outlet />
