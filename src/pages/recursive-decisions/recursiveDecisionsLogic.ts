@@ -124,12 +124,12 @@ export function createRecursiveDecisionModel(dealerScores: Map<string, number>, 
         }
 
         const nextStandOutcomes = computeStandOutcomes(`${transition.total}`, dealerScores)
-        const nextStandReturnPerUnit = 1 + nextStandOutcomes.win - nextStandOutcomes.lose
-        doubleReturnPerUnit += draw.probability * 2 * nextStandReturnPerUnit
         doubleOutcomes.win += draw.probability * nextStandOutcomes.win
         doubleOutcomes.draw += draw.probability * nextStandOutcomes.draw
         doubleOutcomes.lose += draw.probability * nextStandOutcomes.lose
       }
+
+      doubleReturnPerUnit = 1 + 2 * (doubleOutcomes.win - doubleOutcomes.lose)
     }
 
     const action: 'Stand' | 'Hit' | 'Double' =
