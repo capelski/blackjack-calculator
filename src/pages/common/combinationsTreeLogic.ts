@@ -145,6 +145,20 @@ export function createPolicyTreeNavigator(
   const countMemo = new Map<string, number>()
   const prefixTable = buildPrefixTable(sequenceTokens)
 
+  const resolveAction = (state: TreeDecisionState): 'Stand' | 'Hit' | 'Double' => {
+    if (state.cardCount < 2) {
+      return 'Hit'
+    }
+
+    const action = decideAction(state)
+
+    if (action === 'Double' && state.cardCount !== 2) {
+      return 'Hit'
+    }
+
+    return action
+  }
+
   const advanceMatch = (matchState: number, cardLabel: string): { state: number; matched: boolean } => {
     if (sequenceTokens.length === 0) {
       return { state: 0, matched: true }
@@ -183,15 +197,13 @@ export function createPolicyTreeNavigator(
     const score = bestScore(totals)
     const canStand = cardCount >= 2
     const hasBlackjack = isBlackjack(cardCount, totals)
-    const action = canStand
-      ? decideAction({
-        score,
-        cardCount,
-        totals,
-        isSoft: isSoftTotal(totals),
-        hasBlackjack,
-      })
-      : 'Hit'
+    const action = resolveAction({
+      score,
+      cardCount,
+      totals,
+      isSoft: isSoftTotal(totals),
+      hasBlackjack,
+    })
     const isTerminal = hasBlackjack || score > 21 || (canStand && action === 'Stand')
 
     if (isTerminal) {
@@ -234,15 +246,13 @@ export function createPolicyTreeNavigator(
     const walk = (totals: number[], cards: string[], probability: number, matchState: number, hasMatched: boolean): void => {
       const score = bestScore(totals)
       const hasBlackjack = isBlackjack(cards.length, totals)
-      const action = cards.length >= 2
-        ? decideAction({
-          score,
-          cardCount: cards.length,
-          totals,
-          isSoft: isSoftTotal(totals),
-          hasBlackjack,
-        })
-        : 'Hit'
+      const action = resolveAction({
+        score,
+        cardCount: cards.length,
+        totals,
+        isSoft: isSoftTotal(totals),
+        hasBlackjack,
+      })
       const isTerminal = hasBlackjack || score > 21 || (cards.length >= 2 && action === 'Stand')
       const shouldIncludeCurrent = cards.length > 0 && (!finalHandsOnly || isTerminal)
 
