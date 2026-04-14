@@ -4,7 +4,7 @@ export type BlackjackCard = {
   probability: number
 }
 
-export type CombinationAction = 'Stand' | 'Bust' | 'Hit'
+export type CombinationAction = 'Stand' | 'Bust' | 'Hit' | 'Double'
 
 export type CombinationItem = {
   score: string
@@ -26,7 +26,7 @@ export type TreeDecisionState = {
   hasBlackjack: boolean
 }
 
-export type TreeDecisionPolicy = (state: TreeDecisionState) => 'Stand' | 'Hit'
+export type TreeDecisionPolicy = (state: TreeDecisionState) => 'Stand' | 'Hit' | 'Double'
 
 export const PAGE_SIZE = 150
 
@@ -202,6 +202,16 @@ export function createPolicyTreeNavigator(
 
     let total = finalHandsOnly ? 0 : hasMatched ? 1 : 0
 
+    if (canStand && action === 'Double') {
+      for (const card of CARD_OPTIONS) {
+        const transition = advanceMatch(matchState, card.label)
+        total += hasMatched || transition.matched ? 1 : 0
+      }
+
+      countMemo.set(key, total)
+      return total
+    }
+
     for (const card of CARD_OPTIONS) {
       const transition = advanceMatch(matchState, card.label)
       total += countFromTotals(
@@ -244,12 +254,47 @@ export function createPolicyTreeNavigator(
             score: scoreLabel(totals, cards.length),
             cards: cards.join(', '),
             probability,
-            action: isTerminal ? (score > 21 ? 'Bust' : 'Stand') : 'Hit',
+            action: isTerminal ? (score > 21 ? 'Bust' : 'Stand') : action,
           })
         }
       }
 
       if (isTerminal) {
+        return
+      }
+
+      if (cards.length >= 2 && action === 'Double') {
+        for (const card of CARD_OPTIONS) {
+          const next = nextTotals(totals, card.values)
+          const transition = advanceMatch(matchState, card.label)
+          const nextHasMatched = hasMatched || transition.matched
+
+          if (!nextHasMatched) {
+            continue
+          }
+
+          if (skip > 0) {
+            skip -= 1
+            continue
+          }
+
+          if (items.length >= pageSize) {
+            return
+          }
+
+          const nextScore = bestScore(next)
+          items.push({
+            score: scoreLabel(next, cards.length + 1),
+            cards: [...cards, card.label].join(', '),
+            probability: probability * card.probability,
+            action: nextScore > 21 ? 'Bust' : 'Double',
+          })
+
+          if (items.length >= pageSize) {
+            return
+          }
+        }
+
         return
       }
 

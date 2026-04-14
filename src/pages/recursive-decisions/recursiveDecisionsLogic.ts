@@ -164,8 +164,7 @@ export function createRecursiveDecisionModel(dealerScores: Map<string, number>, 
         return 'Hit'
       }
 
-      const action = evaluateState(toState(score, isSoft)).action
-      return action === 'Double' ? 'Hit' : action
+      return evaluateState(toState(score, isSoft)).action
     },
   }
 }
