@@ -15,7 +15,7 @@ function HandOutcomesTable({
   showBetSize = false,
 }: HandOutcomesTableProps) {
   const isCompactMode = mode === 'cards-probability'
-  const shouldShowBetSize = showBetSize && !isCompactMode
+  const shouldShowBetSize = showBetSize
 
   return (
     <section

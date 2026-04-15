@@ -13,7 +13,7 @@ import {
 } from './finalScoresLogic'
 
 function FinalScoresPage() {
-  const { decisionPolicy, mode } = useDecisionPolicyContext()
+  const { decisionPolicy, mode, doublingEnabled } = useDecisionPolicyContext()
   const [openScore, setOpenScore] = useState<string | null>(null)
 
   const finalCombinations = useMemo(
@@ -104,6 +104,7 @@ function FinalScoresPage() {
         title={selectedGroup ? `Final score ${selectedGroup.score}` : ''}
         onClose={() => setOpenScore(null)}
         combinations={selectedGroup?.combinations ?? []}
+        showBetSize={mode === 'recursive-decisions' && doublingEnabled}
       />
     </main>
   )

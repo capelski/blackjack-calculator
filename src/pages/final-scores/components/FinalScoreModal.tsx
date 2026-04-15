@@ -7,9 +7,10 @@ type FinalScoreModalProps = {
   title: string
   combinations: CombinationItem[]
   onClose: () => void
+  showBetSize?: boolean
 }
 
-function FinalScoreModal({ isOpen, title, combinations, onClose }: FinalScoreModalProps) {
+function FinalScoreModal({ isOpen, title, combinations, onClose, showBetSize = false }: FinalScoreModalProps) {
   useEffect(() => {
     if (!isOpen) {
       return
@@ -52,6 +53,7 @@ function FinalScoreModal({ isOpen, title, combinations, onClose }: FinalScoreMod
             combinations={combinations}
             keyPrefix="final-score-modal"
             mode="cards-probability"
+            showBetSize={showBetSize}
           />
         </div>
       </section>
