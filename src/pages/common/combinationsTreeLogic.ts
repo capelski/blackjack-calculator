@@ -11,6 +11,7 @@ export type CombinationItem = {
   cards: string
   probability: number
   action: CombinationAction
+  betSize: number
 }
 
 export type TreeNavigator = {
@@ -243,7 +244,14 @@ export function createPolicyTreeNavigator(
     let skip = pageIndex * pageSize
     const items: CombinationItem[] = []
 
-    const walk = (totals: number[], cards: string[], probability: number, matchState: number, hasMatched: boolean): void => {
+    const walk = (
+      totals: number[],
+      cards: string[],
+      probability: number,
+      matchState: number,
+      hasMatched: boolean,
+      betSize: number,
+    ): void => {
       const score = bestScore(totals)
       const hasBlackjack = isBlackjack(cards.length, totals)
       const action = resolveAction({
@@ -260,11 +268,13 @@ export function createPolicyTreeNavigator(
         if (skip > 0) {
           skip -= 1
         } else if (items.length < pageSize) {
+          const displayBetSize = action === 'Double' ? betSize * 2 : betSize
           items.push({
             score: scoreLabel(totals, cards.length),
             cards: cards.join(', '),
             probability,
             action: isTerminal ? (score > 21 ? 'Bust' : 'Stand') : action,
+            betSize: displayBetSize,
           })
         }
       }
@@ -274,6 +284,8 @@ export function createPolicyTreeNavigator(
       }
 
       if (cards.length >= 2 && action === 'Double') {
+        const nextBetSize = betSize * 2
+
         for (const card of CARD_OPTIONS) {
           const next = nextTotals(totals, card.values)
           const transition = advanceMatch(matchState, card.label)
@@ -298,6 +310,7 @@ export function createPolicyTreeNavigator(
             cards: [...cards, card.label].join(', '),
             probability: probability * card.probability,
             action: nextScore > 21 ? 'Bust' : 'Double',
+            betSize: nextBetSize,
           })
 
           if (items.length >= pageSize) {
@@ -323,7 +336,7 @@ export function createPolicyTreeNavigator(
           return
         }
 
-        walk(next, [...cards, card.label], probability * card.probability, transition.state, nextHasMatched)
+        walk(next, [...cards, card.label], probability * card.probability, transition.state, nextHasMatched, betSize)
 
         if (items.length >= pageSize) {
           return
@@ -331,7 +344,7 @@ export function createPolicyTreeNavigator(
       }
     }
 
-    walk([0], [], 1, 0, sequenceTokens.length === 0)
+    walk([0], [], 1, 0, sequenceTokens.length === 0, 1)
     return items
   }
 

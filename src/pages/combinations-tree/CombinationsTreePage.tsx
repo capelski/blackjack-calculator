@@ -12,7 +12,7 @@ import {
 } from '../common/combinationsTreeLogic'
 
 function CombinationsTreePage() {
-  const { decisionPolicy, mode } = useDecisionPolicyContext()
+  const { decisionPolicy, mode, doublingEnabled } = useDecisionPolicyContext()
   const [finalHandsOnly, setFinalHandsOnly] = useState<boolean>(true)
   const [sequenceQuery, setSequenceQuery] = useState<string>('')
   const [page, setPage] = useState<number>(0)
@@ -74,7 +74,11 @@ function CombinationsTreePage() {
         onNext={() => setPage((current) => Math.min(totalPages - 1, current + 1))}
       />
 
-      <HandOutcomesTable combinations={combinations} keyPrefix={`tree-page-${safePage}`} />
+      <HandOutcomesTable
+        combinations={combinations}
+        keyPrefix={`tree-page-${safePage}`}
+        showBetSize={mode === 'recursive-decisions' && doublingEnabled}
+      />
     </main>
   )
 }
