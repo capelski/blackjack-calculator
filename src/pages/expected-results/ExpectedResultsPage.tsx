@@ -16,15 +16,37 @@ import {
   outcomeClass,
 } from './expectedResultsLogic'
 
-function groupScores(combinations: CombinationItem[]): Map<string, number> {
-  const grouped = new Map<string, number>()
+type ScoreGroup = {
+  probability: number
+  byBetSize: Map<number, number>
+}
+
+function groupScores(combinations: CombinationItem[]): Map<string, ScoreGroup> {
+  const grouped = new Map<string, ScoreGroup>()
 
   for (const combination of combinations) {
     const score = normalizedFinalScore(combination.score)
-    grouped.set(score, (grouped.get(score) ?? 0) + combination.probability)
+    const group = grouped.get(score) ?? {
+      probability: 0,
+      byBetSize: new Map<number, number>(),
+    }
+
+    group.probability += combination.probability
+    group.byBetSize.set(
+      combination.betSize,
+      (group.byBetSize.get(combination.betSize) ?? 0) + combination.probability,
+    )
+
+    grouped.set(score, group)
   }
 
   return grouped
+}
+
+function flattenScoreGroups(groups: Map<string, ScoreGroup>): Map<string, number> {
+  return new Map(
+    [...groups.entries()].map(([score, group]) => [score, group.probability]),
+  )
 }
 
 function sortScores(scores: string[]): string[] {
@@ -43,16 +65,31 @@ function formatReturnPerUnit(value: number): string {
 function ExpectedResultsPage() {
   const { decisionPolicy, mode } = useDecisionPolicyContext()
 
-  const playerScores = useMemo(
+  const playerScoreGroups = useMemo(
     () => groupScores(collectFinalCombinationsWithPolicy(decisionPolicy)),
     [decisionPolicy],
   )
 
-  const dealerScores = useMemo(
+  const dealerScoreGroups = useMemo(
     () => groupScores(collectFinalCombinationsWithPolicy(
       ({ score, cardCount }) => (cardCount >= 2 && score >= 17 ? 'Stand' : 'Hit'),
     )),
     [],
+  )
+
+  const playerScores = useMemo(() => flattenScoreGroups(playerScoreGroups), [playerScoreGroups])
+  const dealerScores = useMemo(() => flattenScoreGroups(dealerScoreGroups), [dealerScoreGroups])
+
+  const playerBreakdownByScore = useMemo(
+    () => new Map(
+      [...playerScoreGroups.entries()].map(([score, group]) => [
+        score,
+        [...group.byBetSize.entries()]
+          .map(([betSize, probability]) => ({ betSize, probability }))
+          .sort((left, right) => left.betSize - right.betSize),
+      ]),
+    ),
+    [playerScoreGroups],
   )
 
   const playerLabels = useMemo(() => sortScores([...playerScores.keys()]), [playerScores])
@@ -117,18 +154,22 @@ function ExpectedResultsPage() {
             <tbody>
               {playerLabels.map((playerScore) => {
                 const playerProbability = playerScores.get(playerScore) ?? 0
+                const playerBreakdown = playerBreakdownByScore.get(playerScore) ?? []
 
                 return (
                   <tr key={playerScore}>
                     <th scope="row">{playerScore}</th>
                     {dealerLabels.map((dealerScore) => {
                       const dealerProbability = dealerScores.get(dealerScore) ?? 0
-                      const product = playerProbability * dealerProbability
                       const result = outcomeClass(playerScore, dealerScore)
 
                       return (
                         <td key={`${playerScore}-${dealerScore}`} className={`expected-cell ${result}`}>
-                          {formatProbability(product)}
+                          {playerBreakdown.map((entry) => (
+                            <span key={`${playerScore}-${dealerScore}-${entry.betSize}`} className="expected-cell-breakdown">
+                              {entry.betSize}x: {formatProbability(entry.probability * dealerProbability)}
+                            </span>
+                          ))}
                         </td>
                       )
                     })}
