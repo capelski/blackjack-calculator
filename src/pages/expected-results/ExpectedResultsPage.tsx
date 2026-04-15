@@ -166,9 +166,11 @@ function ExpectedResultsPage() {
                       return (
                         <td key={`${playerScore}-${dealerScore}`} className={`expected-cell ${result}`}>
                           {playerBreakdown.map((entry) => (
-                            <span key={`${playerScore}-${dealerScore}-${entry.betSize}`} className="expected-cell-breakdown">
-                              {entry.betSize}x: {formatProbability(entry.probability * dealerProbability)}
-                            </span>
+                            <div key={`${playerScore}-${dealerScore}-${entry.betSize}`} className="expected-cell-breakdown">
+                              {entry.betSize === 1
+                                ? formatProbability(entry.probability * dealerProbability)
+                                : `${entry.betSize}x: ${formatProbability(entry.probability * dealerProbability)}`}
+                            </div>
                           ))}
                         </td>
                       )
