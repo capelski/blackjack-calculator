@@ -9,6 +9,31 @@ export type OutcomeTotals = {
   lose: number
 }
 
+export type ScoreGroup = {
+  probability: number
+  byBetSize: Map<number, number>
+}
+
+type ScoreAggregate = number | ScoreGroup
+
+function scoreProbability(value: ScoreAggregate): number {
+  return typeof value === 'number' ? value : value.probability
+}
+
+function scoreStakeWeightedProbability(value: ScoreAggregate): number {
+  if (typeof value === 'number') {
+    return value
+  }
+
+  let weighted = 0
+
+  for (const [betSize, probability] of value.byBetSize.entries()) {
+    weighted += betSize * probability
+  }
+
+  return weighted
+}
+
 export function outcomeClass(playerScore: string, dealerScore: string): Outcome {
   const playerBust = playerScore === '22+'
   const dealerBust = dealerScore === '22+'
@@ -42,8 +67,8 @@ export function outcomeClass(playerScore: string, dealerScore: string): Outcome 
 }
 
 export function calculateOutcomeTotals(
-  playerScores: Map<string, number>,
-  dealerScores: Map<string, number>,
+  playerScores: Map<string, ScoreAggregate>,
+  dealerScores: Map<string, ScoreAggregate>,
   playerLabels: string[],
   dealerLabels: string[],
 ): OutcomeTotals {
@@ -55,10 +80,10 @@ export function calculateOutcomeTotals(
   }
 
   for (const playerScore of playerLabels) {
-    const playerProbability = playerScores.get(playerScore) ?? 0
+    const playerProbability = scoreStakeWeightedProbability(playerScores.get(playerScore) ?? 0)
 
     for (const dealerScore of dealerLabels) {
-      const dealerProbability = dealerScores.get(dealerScore) ?? 0
+      const dealerProbability = scoreProbability(dealerScores.get(dealerScore) ?? 0)
       const product = playerProbability * dealerProbability
       const result = outcomeClass(playerScore, dealerScore)
 

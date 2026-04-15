@@ -14,12 +14,8 @@ import {
   calculateOutcomeTotals,
   calculatePlayerRoi,
   outcomeClass,
+  type ScoreGroup,
 } from './expectedResultsLogic'
-
-type ScoreGroup = {
-  probability: number
-  byBetSize: Map<number, number>
-}
 
 function groupScores(combinations: CombinationItem[]): Map<string, ScoreGroup> {
   const grouped = new Map<string, ScoreGroup>()
@@ -41,12 +37,6 @@ function groupScores(combinations: CombinationItem[]): Map<string, ScoreGroup> {
   }
 
   return grouped
-}
-
-function flattenScoreGroups(groups: Map<string, ScoreGroup>): Map<string, number> {
-  return new Map(
-    [...groups.entries()].map(([score, group]) => [score, group.probability]),
-  )
 }
 
 function sortScores(scores: string[]): string[] {
@@ -77,9 +67,6 @@ function ExpectedResultsPage() {
     [],
   )
 
-  const playerScores = useMemo(() => flattenScoreGroups(playerScoreGroups), [playerScoreGroups])
-  const dealerScores = useMemo(() => flattenScoreGroups(dealerScoreGroups), [dealerScoreGroups])
-
   const playerBreakdownByScore = useMemo(
     () => new Map(
       [...playerScoreGroups.entries()].map(([score, group]) => [
@@ -92,12 +79,12 @@ function ExpectedResultsPage() {
     [playerScoreGroups],
   )
 
-  const playerLabels = useMemo(() => sortScores([...playerScores.keys()]), [playerScores])
-  const dealerLabels = useMemo(() => sortScores([...dealerScores.keys()]), [dealerScores])
+  const playerLabels = useMemo(() => sortScores([...playerScoreGroups.keys()]), [playerScoreGroups])
+  const dealerLabels = useMemo(() => sortScores([...dealerScoreGroups.keys()]), [dealerScoreGroups])
 
   const outcomeTotals = useMemo(
-    () => calculateOutcomeTotals(playerScores, dealerScores, playerLabels, dealerLabels),
-    [dealerLabels, dealerScores, playerLabels, playerScores],
+    () => calculateOutcomeTotals(playerScoreGroups, dealerScoreGroups, playerLabels, dealerLabels),
+    [dealerLabels, dealerScoreGroups, playerLabels, playerScoreGroups],
   )
   const playerRoi = useMemo(() => calculatePlayerRoi(outcomeTotals), [outcomeTotals])
   const playerNetRoi = playerRoi.netRoi
@@ -153,14 +140,14 @@ function ExpectedResultsPage() {
             </thead>
             <tbody>
               {playerLabels.map((playerScore) => {
-                const playerProbability = playerScores.get(playerScore) ?? 0
+                const playerProbability = playerScoreGroups.get(playerScore)?.probability ?? 0
                 const playerBreakdown = playerBreakdownByScore.get(playerScore) ?? []
 
                 return (
                   <tr key={playerScore}>
                     <th scope="row">{playerScore}</th>
                     {dealerLabels.map((dealerScore) => {
-                      const dealerProbability = dealerScores.get(dealerScore) ?? 0
+                      const dealerProbability = dealerScoreGroups.get(dealerScore)?.probability ?? 0
                       const result = outcomeClass(playerScore, dealerScore)
 
                       return (
@@ -182,7 +169,7 @@ function ExpectedResultsPage() {
               <tr>
                 <th scope="row">Total</th>
                 {dealerLabels.map((dealerScore) => {
-                  const dealerProbability = dealerScores.get(dealerScore) ?? 0
+                  const dealerProbability = dealerScoreGroups.get(dealerScore)?.probability ?? 0
 
                   return (
                     <td key={`total-${dealerScore}`} className="expected-total-cell">
