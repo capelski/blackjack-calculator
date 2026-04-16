@@ -20,20 +20,6 @@ function scoreProbability(value: ScoreAggregate): number {
   return typeof value === 'number' ? value : value.probability
 }
 
-function scoreStakeWeightedProbability(value: ScoreAggregate): number {
-  if (typeof value === 'number') {
-    return value
-  }
-
-  let weighted = 0
-
-  for (const [betSize, probability] of value.byBetSize.entries()) {
-    weighted += betSize * probability
-  }
-
-  return weighted
-}
-
 export function outcomeClass(playerScore: string, dealerScore: string): Outcome {
   const playerBust = playerScore === '22+'
   const dealerBust = dealerScore === '22+'
@@ -80,18 +66,24 @@ export function calculateOutcomeTotals(
   }
 
   for (const playerScore of playerLabels) {
-    const playerProbability = scoreStakeWeightedProbability(playerScores.get(playerScore) ?? 0)
+    const playerAggregate = playerScores.get(playerScore) ?? 0
+    const playerByBetSize = typeof playerAggregate === 'number'
+      ? new Map<number, number>([[1, playerAggregate]])
+      : playerAggregate.byBetSize
 
     for (const dealerScore of dealerLabels) {
       const dealerProbability = scoreProbability(dealerScores.get(dealerScore) ?? 0)
-      const product = playerProbability * dealerProbability
       const result = outcomeClass(playerScore, dealerScore)
 
-      if (result === 'win' && playerScore === 'Blackjack' && dealerScore !== 'Blackjack') {
-        totals.blackjackWin += product
-      }
+      for (const [betSize, playerProbability] of playerByBetSize.entries()) {
+        const product = betSize * playerProbability * dealerProbability
 
-      totals[result] += product
+        if (result === 'win' && playerScore === 'Blackjack' && dealerScore !== 'Blackjack') {
+          totals.blackjackWin += product
+        }
+
+        totals[result] += product
+      }
     }
   }
 
