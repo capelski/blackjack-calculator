@@ -4,20 +4,24 @@ import { Given, Then, When } from '@cucumber/cucumber'
 import {
   collectFinalCombinations,
   computeHitOutcomesWithThreshold,
-  computeHitTransition,
   computeStandOutcomes,
   determineThresholdAction,
   groupScores,
   type OutcomeTotals,
-  type ScoreState,
 } from './optimalActionsLogic.ts'
+import {
+  createDealerScoresForStandardRules,
+  createRecursiveDecisionModel,
+} from '../recursive-decisions/recursiveDecisionsLogic.ts'
 
 type ActionComparison = {
   standOutcomes: OutcomeTotals
   hitOutcomes: OutcomeTotals
+  doubleOutcomes: OutcomeTotals | null
   standReturnPerUnit: number
   hitReturnPerUnit: number
-  optimalAction: 'Stand' | 'Hit'
+  doubleReturnPerUnit: number | null
+  optimalAction: 'Stand' | 'Hit' | 'Double'
 }
 
 type OptimalActionsWorldState = {
@@ -56,14 +60,38 @@ When(
 
     const standReturnPerUnit = 1 + standOutcomes.win - standOutcomes.lose
     const hitReturnPerUnit = 1 + hitOutcomes.win - hitOutcomes.lose
-    const optimalAction = hitReturnPerUnit > standReturnPerUnit ? 'Hit' : 'Stand'
+    const optimalAction: 'Stand' | 'Hit' | 'Double' = hitReturnPerUnit > standReturnPerUnit ? 'Hit' : 'Stand'
 
     state.actionComparison = {
       standOutcomes,
       hitOutcomes,
+      doubleOutcomes: null,
       standReturnPerUnit,
       hitReturnPerUnit,
+      doubleReturnPerUnit: null,
       optimalAction,
+    }
+  },
+)
+
+When(
+  'I compute optimal-actions recursive outcomes for score {int} hand type {string} with doubling enabled',
+  (score: number, handType: 'Hard' | 'Soft') => {
+    const model = createRecursiveDecisionModel(createDealerScoresForStandardRules(), true)
+    const evaluation = model.evaluateState({
+      score,
+      handType,
+      isSoft: handType === 'Soft',
+    })
+
+    state.actionComparison = {
+      standOutcomes: evaluation.standOutcomes,
+      hitOutcomes: evaluation.hitOutcomes,
+      doubleOutcomes: evaluation.doubleOutcomes,
+      standReturnPerUnit: evaluation.standReturnPerUnit,
+      hitReturnPerUnit: evaluation.hitReturnPerUnit,
+      doubleReturnPerUnit: evaluation.doubleReturnPerUnit,
+      optimalAction: evaluation.action,
     }
   },
 )
@@ -84,7 +112,7 @@ Then('the optimal-actions stand return per unit should be less than the hit retu
   )
 })
 
-Then('the optimal-actions action with highest return should be {string}', (expectedAction: 'Stand' | 'Hit') => {
+Then('the optimal-actions action with highest return should be {string}', (expectedAction: 'Stand' | 'Hit' | 'Double') => {
   assert.ok(state.actionComparison, 'Expected action comparison to be computed')
   assert.equal(state.actionComparison.optimalAction, expectedAction)
 })
@@ -125,5 +153,25 @@ Then('the optimal-actions hit return per unit should be approximately {float}', 
   assert.ok(
     Math.abs(actual - expected) < 1e-4,
     `Expected hit ROI approximately ${expected}, got ${actual}`,
+  )
+})
+
+Then('the optimal-actions double return per unit should be approximately {float}', (expected: number) => {
+  assert.ok(state.actionComparison, 'Expected action comparison to be computed')
+  const actual = state.actionComparison.doubleReturnPerUnit
+  assert.notEqual(actual, null, 'Expected double return per unit to be available')
+  assert.ok(
+    Math.abs((actual ?? 0) - expected) < 1e-4,
+    `Expected double ROI approximately ${expected}, got ${actual}`,
+  )
+})
+
+Then('the optimal-actions double return per unit should be greater than the hit return per unit', () => {
+  assert.ok(state.actionComparison, 'Expected action comparison to be computed')
+  const doubleReturn = state.actionComparison.doubleReturnPerUnit
+  assert.notEqual(doubleReturn, null, 'Expected double return per unit to be available')
+  assert.ok(
+    (doubleReturn ?? Number.NEGATIVE_INFINITY) > state.actionComparison.hitReturnPerUnit,
+    `Expected double ${doubleReturn} > hit ${state.actionComparison.hitReturnPerUnit}`,
   )
 })
