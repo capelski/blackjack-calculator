@@ -24,9 +24,9 @@ Feature: Expected results logic
     And expected-result losses should be approximately 0.49046973991275467
     And expected-result outcome probabilities should sum to approximately 1
 
-  Scenario: Compute player ROI from aggregated outcomes
-    Given expected-result totals with wins 0.41117520822470316 blackjack wins 0.04509646020797548 draws 0.09835505186252388 and losses 0.49046973991275467
-    When I compute expected-result player ROI
-    Then regular win probability should be approximately 0.3660787480167277
-    And net ROI should be approximately -0.05674630158406374
-    And return per unit invested should be approximately 0.9432536984159363
+  Scenario: Aggregate ROI from score matchups
+    Given player expected-result probabilities "17=0.14512590450523469,18=0.13949692685146797,19=0.13346395558618698,20=0.18025242390966950,21=0.072730663674283533,22+=0.28159284736663931,Blackjack=0.047337278106508882"
+    And dealer expected-result probabilities "17=0.14512590450523469,18=0.13949692685146797,19=0.13346395558618698,20=0.18025242390966950,21=0.072730663674283533,22+=0.28159284736663931,Blackjack=0.047337278106508882"
+    When I aggregate expected-result outcomes
+    Then expected-result ROI should be approximately -0.05674630158406374
+    And expected-result return per unit invested should be approximately 0.9432536984159363

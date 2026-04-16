@@ -7,6 +7,7 @@ export type OutcomeTotals = {
   blackjackWin: number
   draw: number
   lose: number
+  roi: number
 }
 
 export type ScoreGroup = {
@@ -63,6 +64,7 @@ export function calculateOutcomeTotals(
     blackjackWin: 0,
     draw: 0,
     lose: 0,
+    roi: 0,
   }
 
   for (const playerScore of playerLabels) {
@@ -76,10 +78,15 @@ export function calculateOutcomeTotals(
       const result = outcomeClass(playerScore, dealerScore)
 
       for (const [betSize, playerProbability] of playerByBetSize.entries()) {
-        const product = betSize * playerProbability * dealerProbability
+        const product = playerProbability * dealerProbability
 
         if (result === 'win' && playerScore === 'Blackjack' && dealerScore !== 'Blackjack') {
           totals.blackjackWin += product
+          totals.roi += betSize * 1.5 * product
+        } else if (result === 'win') {
+          totals.roi += betSize * product
+        } else if (result === 'lose') {
+          totals.roi -= betSize * product
         }
 
         totals[result] += product
@@ -88,19 +95,4 @@ export function calculateOutcomeTotals(
   }
 
   return totals
-}
-
-export function calculatePlayerRoi(totals: OutcomeTotals): {
-  regularWinProbability: number
-  netRoi: number
-  returnPerUnit: number
-} {
-  const regularWinProbability = totals.win - totals.blackjackWin
-  const netRoi = regularWinProbability + totals.blackjackWin * 1.5 - totals.lose
-
-  return {
-    regularWinProbability,
-    netRoi,
-    returnPerUnit: 1 + netRoi,
-  }
 }

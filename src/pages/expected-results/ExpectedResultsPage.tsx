@@ -12,7 +12,6 @@ import { useDecisionPolicyContext } from '../common/decisionPolicyContext'
 import { collectFinalCombinationsWithPolicy } from '../common/finalCombinationsPolicyLogic'
 import {
   calculateOutcomeTotals,
-  calculatePlayerRoi,
   outcomeClass,
   type ScoreGroup,
 } from './expectedResultsLogic'
@@ -86,9 +85,8 @@ function ExpectedResultsPage() {
     () => calculateOutcomeTotals(playerScoreGroups, dealerScoreGroups, playerLabels, dealerLabels),
     [dealerLabels, dealerScoreGroups, playerLabels, playerScoreGroups],
   )
-  const playerRoi = useMemo(() => calculatePlayerRoi(outcomeTotals), [outcomeTotals])
-  const playerNetRoi = playerRoi.netRoi
-  const playerReturnPerUnit = playerRoi.returnPerUnit
+  const playerNetRoi = outcomeTotals.roi
+  const playerReturnPerUnit = 1 + playerNetRoi
   const playerRoiClass = playerNetRoi >= 0 ? 'roi-positive' : 'roi-negative'
 
   return (

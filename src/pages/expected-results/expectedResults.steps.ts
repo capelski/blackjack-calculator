@@ -3,7 +3,6 @@ import { Given, Then, When } from '@cucumber/cucumber'
 
 import {
   calculateOutcomeTotals,
-  calculatePlayerRoi,
   type Outcome,
   type OutcomeTotals,
   outcomeClass,
@@ -14,13 +13,6 @@ type ExpectedResultsWorldState = {
   dealerScores: Map<string, number>
   outcome: Outcome | null
   totals: OutcomeTotals | null
-  roi:
-    | {
-        regularWinProbability: number
-        netRoi: number
-        returnPerUnit: number
-      }
-    | null
 }
 
 const state: ExpectedResultsWorldState = {
@@ -28,7 +20,6 @@ const state: ExpectedResultsWorldState = {
   dealerScores: new Map(),
   outcome: null,
   totals: null,
-  roi: null,
 }
 
 function parseProbabilityMap(raw: string): Map<string, number> {
@@ -59,13 +50,11 @@ Then('the expected-result outcome should be {string}', (expected: Outcome) => {
 Given('player expected-result probabilities {string}', (raw: string) => {
   state.playerScores = parseProbabilityMap(raw)
   state.totals = null
-  state.roi = null
 })
 
 Given('dealer expected-result probabilities {string}', (raw: string) => {
   state.dealerScores = parseProbabilityMap(raw)
   state.totals = null
-  state.roi = null
 })
 
 When('I aggregate expected-result outcomes', () => {
@@ -105,35 +94,12 @@ Then('expected-result outcome probabilities should sum to approximately {float}'
   assert.ok(Math.abs(total - expected) < 1e-12)
 })
 
-Given(
-  'expected-result totals with wins {float} blackjack wins {float} draws {float} and losses {float}',
-  (win: number, blackjackWin: number, draw: number, lose: number) => {
-    state.totals = {
-      win,
-      blackjackWin,
-      draw,
-      lose,
-    }
-    state.roi = null
-  },
-)
-
-When('I compute expected-result player ROI', () => {
-  assert.ok(state.totals, 'Expected totals to be set')
-  state.roi = calculatePlayerRoi(state.totals)
+Then('expected-result ROI should be approximately {float}', (expected: number) => {
+  assert.ok(state.totals, 'Expected totals to be computed')
+  assert.ok(Math.abs((state.totals?.roi ?? 0) - expected) < 1e-12)
 })
 
-Then('regular win probability should be approximately {float}', (expected: number) => {
-  assert.ok(state.roi, 'Expected ROI to be computed')
-  assert.ok(Math.abs((state.roi?.regularWinProbability ?? 0) - expected) < 1e-12)
-})
-
-Then('net ROI should be approximately {float}', (expected: number) => {
-  assert.ok(state.roi, 'Expected ROI to be computed')
-  assert.ok(Math.abs((state.roi?.netRoi ?? 0) - expected) < 1e-12)
-})
-
-Then('return per unit invested should be approximately {float}', (expected: number) => {
-  assert.ok(state.roi, 'Expected ROI to be computed')
-  assert.ok(Math.abs((state.roi?.returnPerUnit ?? 0) - expected) < 1e-12)
+Then('expected-result return per unit invested should be approximately {float}', (expected: number) => {
+  assert.ok(state.totals, 'Expected totals to be computed')
+  assert.ok(Math.abs(1 + (state.totals?.roi ?? 0) - expected) < 1e-12)
 })
