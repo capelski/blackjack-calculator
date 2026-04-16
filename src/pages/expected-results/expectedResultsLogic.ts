@@ -4,7 +4,6 @@ export type Outcome = 'win' | 'draw' | 'lose'
 
 export type OutcomeTotals = {
   win: number
-  blackjackWin: number
   draw: number
   lose: number
   roi: number
@@ -61,7 +60,6 @@ export function calculateOutcomeTotals(
 ): OutcomeTotals {
   const totals: OutcomeTotals = {
     win: 0,
-    blackjackWin: 0,
     draw: 0,
     lose: 0,
     roi: 0,
@@ -81,7 +79,6 @@ export function calculateOutcomeTotals(
         const product = playerProbability * dealerProbability
 
         if (result === 'win' && playerScore === 'Blackjack' && dealerScore !== 'Blackjack') {
-          totals.blackjackWin += product
           totals.roi += betSize * 1.5 * product
         } else if (result === 'win') {
           totals.roi += betSize * product

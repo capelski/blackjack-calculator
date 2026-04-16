@@ -14,12 +14,11 @@ Feature: Expected results logic
       | "18"        | "22+"       | "win"  |
       | "19"        | "19"        | "draw" |
 
-  Scenario: Aggregate win, draw, lose and blackjack-win probabilities
+  Scenario: Aggregate win, draw and lose probabilities
     Given player expected-result probabilities "17=0.14512590450523469,18=0.13949692685146797,19=0.13346395558618698,20=0.18025242390966950,21=0.072730663674283533,22+=0.28159284736663931,Blackjack=0.047337278106508882"
     And dealer expected-result probabilities "17=0.14512590450523469,18=0.13949692685146797,19=0.13346395558618698,20=0.18025242390966950,21=0.072730663674283533,22+=0.28159284736663931,Blackjack=0.047337278106508882"
     When I aggregate expected-result outcomes
     Then expected-result wins should be approximately 0.41117520822470316
-    And expected-result blackjack wins should be approximately 0.04509646020797548
     And expected-result draws should be approximately 0.09835505186252388
     And expected-result losses should be approximately 0.49046973991275467
     And expected-result outcome probabilities should sum to approximately 1

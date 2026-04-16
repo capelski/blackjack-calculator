@@ -73,11 +73,6 @@ Then('expected-result wins should be approximately {float}', (expected: number) 
   assert.ok(Math.abs((state.totals?.win ?? 0) - expected) < 1e-12)
 })
 
-Then('expected-result blackjack wins should be approximately {float}', (expected: number) => {
-  assert.ok(state.totals, 'Expected totals to be computed')
-  assert.ok(Math.abs((state.totals?.blackjackWin ?? 0) - expected) < 1e-12)
-})
-
 Then('expected-result draws should be approximately {float}', (expected: number) => {
   assert.ok(state.totals, 'Expected totals to be computed')
   assert.ok(Math.abs((state.totals?.draw ?? 0) - expected) < 1e-12)
