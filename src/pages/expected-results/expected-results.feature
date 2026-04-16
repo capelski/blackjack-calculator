@@ -29,3 +29,13 @@ Feature: Expected results logic
     When I aggregate expected-result outcomes
     Then expected-result ROI should be approximately -0.05674630158406374
     And expected-result return per unit invested should be approximately 0.9432536984159363
+
+  Scenario: Aggregate ROI with doubling-enabled player probabilities
+    Given player expected-result probabilities with bet sizes "20@1=0.5,20@2=0.5"
+    And dealer expected-result probabilities "17=1"
+    When I aggregate expected-result outcomes
+    Then expected-result wins should be approximately 1
+    And expected-result draws should be approximately 0
+    And expected-result losses should be approximately 0
+    And expected-result ROI should be approximately 1.5
+    And expected-result return per unit invested should be approximately 2.5

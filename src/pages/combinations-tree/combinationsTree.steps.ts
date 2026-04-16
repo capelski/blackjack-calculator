@@ -3,6 +3,7 @@ import { Given, Then, When } from '@cucumber/cucumber'
 
 import {
   type CombinationItem,
+  createPolicyTreeNavigator,
   createTreeNavigator,
   formatProbability,
   parseSequenceQuery,
@@ -26,6 +27,21 @@ const state: WorldState = {
 
 Given('a tree navigator with threshold {int} and sequence {string}', (threshold: number, sequence: string) => {
   state.navigator = createTreeNavigator(threshold, parseSequenceQuery(sequence))
+  state.totalCombinations = null
+  state.pageItems = []
+})
+
+Given('a doubling-enabled policy tree navigator with sequence {string}', (sequence: string) => {
+  state.navigator = createPolicyTreeNavigator(
+    ({ score, cardCount, hasBlackjack }) => {
+      if (hasBlackjack || score > 21) {
+        return 'Stand'
+      }
+
+      return cardCount === 2 ? 'Double' : 'Hit'
+    },
+    parseSequenceQuery(sequence),
+  )
   state.totalCombinations = null
   state.pageItems = []
 })
@@ -108,3 +124,9 @@ Then(
     assert.equal(item.action, expectedAction)
   },
 )
+
+Then('the first combination bet size should be {int}', (expectedBetSize: number) => {
+  const first = state.pageItems[0]
+  assert.ok(first, 'Expected at least one page item')
+  assert.equal(first.betSize, expectedBetSize)
+})

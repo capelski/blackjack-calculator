@@ -38,3 +38,13 @@ Feature: Recursive decisions logic
   Scenario: Best return per unit matches selected action ROI
     When I evaluate recursive-decisions for score 16 hand type "Hard"
     Then the recursive-decisions best return per unit should equal the selected action return
+
+  Scenario: Hard 11 favors doubling when doubling mode is enabled
+    Given recursive-decisions standard dealer probabilities from threshold 17 with doubling enabled
+    When I evaluate recursive-decisions for score 11 hand type "Hard"
+    Then the recursive-decisions action with highest return should be "Double"
+    And the recursive-decisions hit return per unit should be greater than the stand return per unit
+    And the recursive-decisions double return per unit should be greater than the hit return per unit
+    And the recursive-decisions stand return per unit should be approximately 0.5631856947332878
+    And the recursive-decisions hit return per unit should be approximately 1.144018966218729
+    And the recursive-decisions double return per unit should be approximately 1.2604708660788555

@@ -6,10 +6,11 @@ import {
   type Outcome,
   type OutcomeTotals,
   outcomeClass,
+  type ScoreGroup,
 } from './expectedResultsLogic.ts'
 
 type ExpectedResultsWorldState = {
-  playerScores: Map<string, number>
+  playerScores: Map<string, number | ScoreGroup>
   dealerScores: Map<string, number>
   outcome: Outcome | null
   totals: OutcomeTotals | null
@@ -49,6 +50,32 @@ Then('the expected-result outcome should be {string}', (expected: Outcome) => {
 
 Given('player expected-result probabilities {string}', (raw: string) => {
   state.playerScores = parseProbabilityMap(raw)
+  state.totals = null
+})
+
+Given('player expected-result probabilities with bet sizes {string}', (raw: string) => {
+  const grouped = new Map<string, ScoreGroup>()
+
+  for (const item of raw.split(',').map((part) => part.trim()).filter((part) => part.length > 0)) {
+    const [scoreAndBetSize, probabilityRaw] = item.split('=').map((part) => part.trim())
+    assert.ok(scoreAndBetSize && probabilityRaw, `Invalid score-betSize-probability pair: ${item}`)
+
+    const [score, betSizeRaw] = scoreAndBetSize.split('@').map((part) => part.trim())
+    assert.ok(score && betSizeRaw, `Expected score@betSize format, got: ${scoreAndBetSize}`)
+
+    const betSize = Number(betSizeRaw)
+    const probability = Number(probabilityRaw)
+    const group = grouped.get(score) ?? {
+      probability: 0,
+      byBetSize: new Map<number, number>(),
+    }
+
+    group.probability += probability
+    group.byBetSize.set(betSize, (group.byBetSize.get(betSize) ?? 0) + probability)
+    grouped.set(score, group)
+  }
+
+  state.playerScores = grouped
   state.totals = null
 })
 

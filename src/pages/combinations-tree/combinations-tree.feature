@@ -31,3 +31,12 @@ Feature: Combinations tree logic
     And the first combination probability should be approximately 0.0059171597633
     And the third combination should have cards "A, 3"
     And the 10th combination should have score "Blackjack" cards "A, 10" and action "Stand"
+
+  Scenario: Doubling-enabled policy expands final-hand combinations
+    Given a doubling-enabled policy tree navigator with sequence ""
+    When I ask for the total combinations with final hands only
+    Then the total combinations should be 982
+    When I request page 0 with page size 10 for final hands only
+    Then the first combination should have score "13 (soft 3)" cards "A, A, A" and action "Double"
+    And the first combination bet size should be 2
+    And the first combination probability should be approximately 0.0004551661356395085

@@ -29,6 +29,14 @@ Given('recursive-decisions standard dealer probabilities from threshold {int}', 
   state.evaluation = null
 })
 
+Given('recursive-decisions standard dealer probabilities from threshold {int} with doubling enabled', (dealerThreshold: number) => {
+  assert.equal(dealerThreshold, 17, 'Recursive decisions tests currently assume dealer threshold 17')
+
+  const dealerScores = createDealerScoresForStandardRules()
+  state.model = createRecursiveDecisionModel(dealerScores, true)
+  state.evaluation = null
+})
+
 When(
   'I evaluate recursive-decisions for score {int} hand type {string}',
   (score: number, handType: 'Hard' | 'Soft') => {
@@ -126,6 +134,22 @@ Then('the recursive-decisions hit return per unit should be approximately {float
   assert.ok(
     Math.abs(state.evaluation.hitReturnPerUnit - expected) < TOLERANCE,
     `Expected hit return per unit ${expected}, got ${state.evaluation.hitReturnPerUnit}`,
+  )
+})
+
+Then('the recursive-decisions double return per unit should be approximately {float}', (expected: number) => {
+  assert.ok(state.evaluation, 'Expected recursive evaluation to be computed')
+  assert.ok(
+    Math.abs(state.evaluation.doubleReturnPerUnit - expected) < TOLERANCE,
+    `Expected double return per unit ${expected}, got ${state.evaluation.doubleReturnPerUnit}`,
+  )
+})
+
+Then('the recursive-decisions double return per unit should be greater than the hit return per unit', () => {
+  assert.ok(state.evaluation, 'Expected recursive evaluation to be computed')
+  assert.ok(
+    state.evaluation.doubleReturnPerUnit > state.evaluation.hitReturnPerUnit,
+    `Expected double ${state.evaluation.doubleReturnPerUnit} > hit ${state.evaluation.hitReturnPerUnit}`,
   )
 })
 
